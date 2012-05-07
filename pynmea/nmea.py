@@ -692,6 +692,30 @@ class GPZDA(NMEASentence):
 
         super(GPZDA, self).__init__(parse_map)
 
+# Implemented by Janez Stupar for Visionect
+class GPRSA(NMEASentence):
+    """ Rudder Sensor Angle
+    """
+    def __init__(self):
+        parse_map = (
+            ("Starboard rudder sensor","sboard_sensor"),
+            ("Starboard rudder sensor status","sboard_sensord_status"),
+            ("Port rudder sensor","port_sensor"),
+            ("Port rudder sensor status","port_sensor_status"),
+        )
+        super(GPRSA,self).__init__(parse_map)
+
+class GPHSC(NMEASentence):
+    """ Heading Steering Command
+    """
+    def __init__(self):
+        parse_map = (
+            ("Heading","heading"),
+            ("True","hdg_true"),
+            ("Heading Magnetic","heading_magnetic"),
+            ("Magnetic","hdg_magnetic"),
+        )
+        super(GPHSC,self).__init__(parse_map)
 
 # ---------------------------------- Not Yet Implimented --------------------- #
 # ---------------------------------------------------------------------------- #
