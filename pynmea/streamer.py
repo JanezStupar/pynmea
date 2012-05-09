@@ -68,7 +68,7 @@ class NMEAStream(object):
             We can always catch the error later if the user wishes to supress
             errors.
         """
-        sen_type = sentence.split(',')[0].lstrip('$')
+        sen_type = sentence.split(',')[0].lstrip('$')[-3:]
         sen_mod = __import__('pynmea.nmea', fromlist=[sen_type])
         sen_obj = getattr(sen_mod, sen_type, None)
         return sen_obj
