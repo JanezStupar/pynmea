@@ -698,10 +698,10 @@ class GPRSA(NMEASentence):
     """
     def __init__(self):
         parse_map = (
-            ("Starboard rudder sensor","sboard_sensor"),
-            ("Starboard rudder sensor status","sboard_sensord_status"),
-            ("Port rudder sensor","port_sensor"),
-            ("Port rudder sensor status","port_sensor_status"),
+            ("Starboard rudder sensor","rsa_starboard"),
+            ("Starboard rudder sensor status","rsa_starboard_status"),
+            ("Port rudder sensor","rsa_port"),
+            ("Port rudder sensor status","rsa_port_status"),
         )
         super(GPRSA,self).__init__(parse_map)
 
@@ -716,6 +716,26 @@ class GPHSC(NMEASentence):
             ("Magnetic","hdg_magnetic"),
         )
         super(GPHSC,self).__init__(parse_map)
+
+class GPMWD(NMEASentence):
+    """ Wind Direction
+    """
+    def __init__(self):
+        parse_map = ()
+        super(GPMWD).__init__(parse_map)
+
+class GPMWV(NMEASentence):
+    """ Wind Speed and Angle
+    """
+    def __init__(self):
+        parse_map = (
+            ("Wind angle","wind_angle"),
+            ("Reference","reference"), # relative (R)/true(T)
+            ("Wind speed","wind_speed"),
+            ("Wind speed units","wind_speed_units"), # K/M/N
+            ("Status","status"),
+        )
+        super(GPMWV,self).__init__(parse_map)
 
 # ---------------------------------- Not Yet Implimented --------------------- #
 # ---------------------------------------------------------------------------- #
