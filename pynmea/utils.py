@@ -1,6 +1,7 @@
 """ Functions that get used by multiple classes go in here
 """
-
+import decimal
+import sys
 
 def checksum_calc(nmea_str):
     """ Loop through all of the given characters and xor the current to the
@@ -14,3 +15,15 @@ def checksum_calc(nmea_str):
 
     return "%02X" % chksum_val
 
+class NMEADeserializer(object):
+
+    def deserialize(self,data,type):
+        method = getattr(self,'deserialize_'+type)
+        if not method:
+            raise Exception('Requested serializer not implemented')
+        else:
+            return method(data)
+
+
+    def deserialize_decimal(self,data):
+        return decimal.Decimal(data)

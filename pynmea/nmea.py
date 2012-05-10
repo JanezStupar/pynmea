@@ -1,5 +1,5 @@
 import re
-from pynmea.utils import checksum_calc
+from pynmea.utils import checksum_calc, NMEADeserializer
 
 class NMEASentence(object):
     """ Base sentence class. This is used to pull apart a sentence.
@@ -10,6 +10,7 @@ class NMEASentence(object):
     def __init__(self, parse_map):
         self.sen_type = None
         self.parse_map = parse_map
+        self.deserializer = NMEADeserializer()
 
     def _parse(self, nmea_str):
         """ Tear the sentence apart, grabbing the name on the way. Create a
@@ -53,7 +54,12 @@ class NMEASentence(object):
         for index, item in enumerate(self.parse_map):
             if index + 1 > parts_len:
                 break
-            setattr(self, item[1], self.parts[index + 1])
+            if len(item) == 3:
+                #If parse map contains type element, deserialize the value
+                val = self.deserializer.deserialize(self.parts[index+1],item[2])
+                setattr(self,item[1],val)
+            else:
+                setattr(self, item[1], self.parts[index + 1])
         #for index, item in enumerate(self.parts[1:]):
             #setattr(self, self.parse_map[index][1], item)
 
@@ -437,7 +443,7 @@ class HDG(NMEASentence):
 class HDT(NMEASentence):
     def __init__(self):
         parse_map = (
-            ("Heading", "heading"),
+            ("Heading", "heading","decimal"),
             ("True", "hdg_true"))
             #("Checksum", "checksum"))
 
@@ -698,9 +704,9 @@ class RSA(NMEASentence):
     """
     def __init__(self):
         parse_map = (
-            ("Starboard rudder sensor","rsa_starboard"),
+            ("Starboard rudder sensor","rsa_starboard","decimal"),
             ("Starboard rudder sensor status","rsa_starboard_status"),
-            ("Port rudder sensor","rsa_port"),
+            ("Port rudder sensor","rsa_port","decimal"),
             ("Port rudder sensor status","rsa_port_status"),
         )
         super(RSA,self).__init__(parse_map)
@@ -710,10 +716,10 @@ class HSC(NMEASentence):
     """
     def __init__(self):
         parse_map = (
-            ("Heading","heading"),
-            ("True","hdg_true"),
-            ("Heading Magnetic","heading_magnetic"),
-            ("Magnetic","hdg_magnetic"),
+            ("Heading","heading_true","decimal"),
+            ("True","true"),
+            ("Heading Magnetic","heading_magnetic","decimal"),
+            ("Magnetic","magnetic"),
         )
         super(HSC,self).__init__(parse_map)
 
@@ -721,17 +727,26 @@ class MWD(NMEASentence):
     """ Wind Direction
     """
     def __init__(self):
-        parse_map = ()
-        super(MWD).__init__(parse_map)
+        parse_map = (
+            ("Wind direction true","direction_true","decimal"),
+            ("True","true"),
+            ("Wind direction magnetic","direction_magnetic","decimal"),
+            ("Magnetic","magnetic"),
+            ("Wind speed knots","wind_speed_knots","decimal"),
+            ("Knots","knots"),
+            ("Wind speed meters/second","wind_speed_meters","decimal"),
+            ("Wind speed","meters"),
+        )
+        super(MWD,self).__init__(parse_map)
 
 class MWV(NMEASentence):
     """ Wind Speed and Angle
     """
     def __init__(self):
         parse_map = (
-            ("Wind angle","wind_angle"),
+            ("Wind angle","wind_angle","decimal"),
             ("Reference","reference"), # relative (R)/true(T)
-            ("Wind speed","wind_speed"),
+            ("Wind speed","wind_speed","decimal"),
             ("Wind speed units","wind_speed_units"), # K/M/N
             ("Status","status"),
         )
