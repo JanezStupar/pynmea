@@ -7,10 +7,12 @@ class NMEASentence(object):
         subclass this base class should all the additional functionality.
     """
 
-    def __init__(self, parse_map):
+    def __init__(self, parse_map,**kwargs):
         self.sen_type = None
         self.parse_map = parse_map
-        self.deserializer = NMEADeserializer()
+        self.deserialize = kwargs.get('deserialize',False)
+        if self.deserialize:
+            self.deserializer = NMEADeserializer()
 
     def _parse(self, nmea_str):
         """ Tear the sentence apart, grabbing the name on the way. Create a
@@ -54,7 +56,7 @@ class NMEASentence(object):
         for index, item in enumerate(self.parse_map):
             if index + 1 > parts_len:
                 break
-            if len(item) == 3:
+            if self.deserialize and len(item) > 2:
                 #If parse map contains type element, deserialize the value
                 val = self.deserializer.deserialize(self.parts[index+1],item[2])
                 setattr(self,item[1],val)
@@ -81,7 +83,7 @@ class NMEASentence(object):
 class AAM(NMEASentence):
     """ Waypoint Arrival Alarm
     """
-    def __init__(self):
+    def __init__(self,**kwargs):
         parse_map = (
             ("Arrival Circle Entered", "arrival_circ_entered"),
             ("Perpendicular Passed", "perp_passed"),
@@ -89,13 +91,13 @@ class AAM(NMEASentence):
             ("Nautical Miles", "circle_rad_unit"),
             ("Waypoint ID", "waypoint_id"))
 
-        super(AAM, self).__init__(parse_map)
+        super(AAM, self).__init__(parse_map,**kwargs)
 
 
 class ALM(NMEASentence):
     """ GPS Almanac data
     """
-    def __init__(self):
+    def __init__(self,**kwargs):
         parse_map = (("Total number of messages", "total_num_msgs"),
                      ("Message number", "msg_num"),
                      ("Satellite PRN number", "sat_prn_num"), # 01 - 32
@@ -112,14 +114,14 @@ class ALM(NMEASentence):
                      ("F0 Clock parameter", "f0_clock_param"),
                      ("F1 Clock parameter", "f1_clock_param"))
 
-        super(ALM, self).__init__(parse_map)
+        super(ALM, self).__init__(parse_map,**kwargs)
 
 
 class APA(NMEASentence):
     """ Autopilot Sentence "A"
     """
 
-    def __init__(self):
+    def __init__(self,**kwargs):
         parse_map = (
             ("General Status", "status_gen"),
             ("Cycle lock Status", "status_cycle_lock"),
@@ -132,14 +134,14 @@ class APA(NMEASentence):
             ("Bearing type", "bearing_type"), # M = Magnetic, T = True
             ("Destination waypoint ID", "dest_waypoint_id"))
 
-        super(APA, self).__init__(parse_map)
+        super(APA, self).__init__(parse_map,**kwargs)
 
 
 class APB(NMEASentence):
     """ Autopilot Sentence "B"
     """
 
-    def __init__(self):
+    def __init__(self,**kwargs):
         parse_map = (
             ("General Status", "status_gen"),
             ("Cycle lock Status", "status_cycle_lock"),
@@ -156,13 +158,13 @@ class APB(NMEASentence):
             ("Heading to steer to destination", "heading_to_dest"),
             ("Heading to steer to destination type", "heading_to_dest_type")) # M = Magnetic, T = True
 
-        super(APB, self).__init__(parse_map)
+        super(APB, self).__init__(parse_map,**kwargs)
 
 
 class BEC(NMEASentence):
     """ Bearing & Distance to Waypoint, Dead Reckoning
     """
-    def __init__(self):
+    def __init__(self,**kwargs):
         parse_map = (
             ("Timestamp", "timestamp"),
             ("Waypoint Latitude", "waypoint_lat"),
@@ -178,20 +180,20 @@ class BEC(NMEASentence):
             ("Waypoint ID", "waypoint_id"),
             ("FAA mode indicator", "faa_mode"))
 
-        super(BEC, self).__init__(parse_map)
+        super(BEC, self).__init__(parse_map,**kwargs)
 
 
 class BOD(NMEASentence):
-    def __init__(self):
+    def __init__(self,**kwargs):
         # 045.,T,023.,M,DEST,START
-        parse_map = (('Bearing True', 'bearing_t'),
+        parse_map = (('Bearing True', 'bearing_t','decimal'),
                      ('Bearing True Type', 'bearing_t_type'),
-                     ('Bearing Magnetic', 'bearing_mag'),
+                     ('Bearing Magnetic', 'bearing_mag','decimal'),
                      ('Bearing Magnetic Type', 'bearing_mag_type'),
                      ('Destination', 'dest'),
                      ('Start', 'start'))
 
-        super(BOD, self).__init__(parse_map)
+        super(BOD, self).__init__(parse_map,**kwargs)
 
     @property
     def bearing_true(self):
@@ -211,7 +213,7 @@ class BOD(NMEASentence):
 
 
 class BWC(NMEASentence):
-    def __init__(self):
+    def __init__(self,**kwargs):
         parse_map = (
             ('Timestamp', 'timestamp'),
             ('Latitude of next Waypoint', 'lat_next'),
@@ -227,11 +229,11 @@ class BWC(NMEASentence):
             ('Waypoint Name', 'waypoint_name'))
             #('Checksum', 'checksum'))
 
-        super(BWC, self).__init__(parse_map)
+        super(BWC, self).__init__(parse_map,**kwargs)
 
 
 class BWR(NMEASentence):
-    def __init__(self):
+    def __init__(self,**kwargs):
         parse_map = (
             ('Timestamp', 'timestamp'),
             ('Latitude of next Waypoint', 'lat_next'),
@@ -247,11 +249,11 @@ class BWR(NMEASentence):
             ('Waypoint Name', 'waypoint_name'))
             #('Checksum', 'checksum'))
 
-        super(BWR, self).__init__(parse_map)
+        super(BWR, self).__init__(parse_map,**kwargs)
 
 
 class GGA(NMEASentence):
-    def __init__(self):
+    def __init__(self,**kwargs):
         parse_map = (
             ('Timestamp', 'timestamp'),
             ('Latitude', 'latitude'),
@@ -269,13 +271,13 @@ class GGA(NMEASentence):
             ('Differential Reference Station ID', 'ref_station_id'))
             #('Checksum', 'checksum'))
 
-        super(GGA, self).__init__(parse_map)
+        super(GGA, self).__init__(parse_map,**kwargs)
 
 
 class BWW(NMEASentence):
     """ Bearing, Waypoint to Waypoint
     """
-    def __init__(self):
+    def __init__(self,**kwargs):
         parse_map = (
             ("Bearing degrees True", "bearing_deg_true"),
             ("Bearing degrees True Symbol", "bearing_deg_true_sym"),
@@ -284,11 +286,11 @@ class BWW(NMEASentence):
             ("Destination Waypoint ID", "waypoint_id_dest"),
             ("Origin Waypoint ID", "waypoint_id_orig"))
 
-        super(BWW, self).__init__(parse_map)
+        super(BWW, self).__init__(parse_map,**kwargs)
 
 
 class GLL(NMEASentence):
-    def __init__(self):
+    def __init__(self,**kwargs):
         parse_map = (
             ('Latitude', 'lat'),
             ('Latitude Direction', 'lat_dir'),
@@ -297,7 +299,7 @@ class GLL(NMEASentence):
             ('Timestamp', 'timestamp'),
             ('Data Validity', "data_valid"))
 
-        super(GLL, self).__init__(parse_map)
+        super(GLL, self).__init__(parse_map,**kwargs)
 
         self._use_data_validity = False
 
@@ -373,7 +375,7 @@ class GLL(NMEASentence):
 
 
 class GSA(NMEASentence):
-    def __init__(self):
+    def __init__(self,**kwargs):
         parse_map = (
             ('Mode', 'mode'),
             ('Mode fix type', 'mode_fix_type'),
@@ -394,11 +396,11 @@ class GSA(NMEASentence):
             ('VDOP (Vertical DOP)', 'vdop'))
             #('Checksum', 'checksum'))
 
-        super(GSA, self).__init__(parse_map)
+        super(GSA, self).__init__(parse_map,**kwargs)
 
 
 class GSV(NMEASentence):
-    def __init__(self):
+    def __init__(self,**kwargs):
         parse_map = (
             ('Number of messages of type in cycle', 'num_messages'),
             ('Message Number', 'msg_num'),
@@ -421,42 +423,42 @@ class GSV(NMEASentence):
             ('SNR 4', 'snr_4'))  # 00-99 dB
             #('Checksum', 'checksum'))
 
-        super(GSV, self).__init__(parse_map)
+        super(GSV, self).__init__(parse_map,**kwargs)
 
 
 class HDG(NMEASentence):
     """ NOTE! This is a GUESS as I cannot find an actual spec
         telling me the fields. Updates are welcome!
     """
-    def __init__(self):
+    def __init__(self,**kwargs):
         parse_map = (
-            ("Heading", "heading"),
-            ("Deviation", "deviation"),
+            ("Heading", "heading","decimal"),
+            ("Deviation", "deviation","decimal"),
             ("Deviation Direction", "dev_dir"),
-            ("Variation", "variation"),
+            ("Variation", "variation","decimal"),
             ("Variation Direction", "var_dir"))
             #("Checksum", "checksum"))
 
-        super(HDG, self).__init__(parse_map)
+        super(HDG, self).__init__(parse_map,**kwargs)
 
 
 class HDT(NMEASentence):
-    def __init__(self):
+    def __init__(self,**kwargs):
         parse_map = (
             ("Heading", "heading","decimal"),
             ("True", "hdg_true"))
             #("Checksum", "checksum"))
 
-        super(HDT, self).__init__(parse_map)
+        super(HDT, self).__init__(parse_map,**kwargs)
 
 
 class R00(NMEASentence):
-    def __init__(self):
+    def __init__(self,**kwargs):
         parse_map = (
             ("Waypoint List", "waypoint_list"),)
             #("Checksum", "checksum"))
 
-        super(R00, self).__init__(parse_map)
+        super(R00, self).__init__(parse_map,**kwargs)
 
     def parse(self, nmea_str):
         """ As the length of the sentence is variable (there can be many or few
@@ -476,7 +478,7 @@ class R00(NMEASentence):
 
 
 class RMA(NMEASentence):
-    def __init__(self):
+    def __init__(self,**kwargs):
         parse_map = (
             ("Data status", "data_status"),
             ("Latitude", "lat"),
@@ -491,13 +493,13 @@ class RMA(NMEASentence):
             ("Variation Direction", "var_dir"))
             #("Checksum", "checksum"))
 
-        super(RMA, self).__init__(parse_map)
+        super(RMA, self).__init__(parse_map,**kwargs)
 
 
 class RMB(NMEASentence):
     """ Recommended Minimum Navigation Information
     """
-    def __init__(self):
+    def __init__(self,**kwargs):
         parse_map = (
             ("Data Validity", "validity"),
             ("Cross Track Error", "cross_track_error"), # nautical miles, 9.9 max
@@ -513,13 +515,13 @@ class RMB(NMEASentence):
             ("Velocity Towards Destination", "dest_velocity"), # Knots
             ("Arrival Alarm", "arrival_alarm")) # A = Arrived, V = Not arrived
             #("Checksum", "checksum"))
-        super(RMB, self).__init__(parse_map)
+        super(RMB, self).__init__(parse_map,**kwargs)
 
 
 class RMC(NMEASentence):
     """ Recommended Minimum Specific GPS/TRANSIT Data
     """
-    def __init__(self):
+    def __init__(self,**kwargs):
         parse_map = (("Timestamp", "timestamp"),
                      ("Data Validity", "data_validity"),
                      ("Latitude", "lat"),
@@ -532,13 +534,13 @@ class RMC(NMEASentence):
                      ("Magnetic Variation", "mag_variation"),
                      ("Magnetic Variation Direction", "mag_var_dir"))
                      #("Checksum", "checksum"))
-        super(RMC, self).__init__(parse_map)
+        super(RMC, self).__init__(parse_map,**kwargs)
 
 
 class RTE(NMEASentence):
     """ Routes
     """
-    def __init__(self):
+    def __init__(self,**kwargs):
         parse_map = (
             ("Number of sentences in sequence", "num_in_seq"),
             ("Sentence Number", "sen_num"),
@@ -547,7 +549,7 @@ class RTE(NMEASentence):
             ("Waypoint List", "waypoint_list"))
             #("Checksum", "checksum"))
 
-        super(RTE, self).__init__(parse_map)
+        super(RTE, self).__init__(parse_map,**kwargs)
 
     def parse(self, nmea_str):
         """ As the length of the sentence is variable (there can be many or few
@@ -570,19 +572,19 @@ class STN(NMEASentence):
     """ NOTE: No real data could be found for examples of the actual spec so
             it is a guess that there may be a checksum on the end
     """
-    def __init__(self):
+    def __init__(self,**kwargs):
         parse_map = (
             ("Talker ID Number", "talker_id"),) # 00 - 99
             #("Checksum", "checksum"))
 
 
-        super(STN, self).__init__(parse_map)
+        super(STN, self).__init__(parse_map,**kwargs)
 
 
 class TRF(NMEASentence):
     """ Transit Fix Data
     """
-    def __init__(self):
+    def __init__(self,**kwargs):
         parse_map = (
             ("Timestamp (UTC)", "timestamp"),
             ("Date (DD/MM/YY", "date"),
@@ -596,13 +598,13 @@ class TRF(NMEASentence):
             ("Update Distance", "update_dist"), # Nautical Miles
             ("Satellite ID", "sat_id"))
 
-        super(TRF, self).__init__(parse_map)
+        super(TRF, self).__init__(parse_map,**kwargs)
 
 
 class VBW(NMEASentence):
     """ Dual Ground/Water Speed
     """
-    def __init__(self):
+    def __init__(self,**kwargs):
         parse_map = (
             ("Longitudinal Water Speed", "lon_water_spd"), # Knots
             ("Transverse Water Speed", "trans_water_spd"), # Knots
@@ -611,13 +613,13 @@ class VBW(NMEASentence):
             ("Transverse Ground Speed", "trans_grnd_spd"), # Knots
             ("Ground Speed Data Validity", "data_validity_grnd_spd"))
             #("Checksum", "checksum"))
-        super(VBW, self).__init__(parse_map)
+        super(VBW, self).__init__(parse_map,**kwargs)
 
 
 class VTG(NMEASentence):
     """ Track Made Good and Ground Speed
     """
-    def __init__(self):
+    def __init__(self,**kwargs):
         parse_map = (
             ("True Track made good", "true_track"),
             ("True Track made good symbol", "true_track_sym"),
@@ -628,25 +630,25 @@ class VTG(NMEASentence):
             ("Speed over ground kmph", "spd_over_grnd_kmph"),
             ("Speed over ground kmph symbol", "spd_over_grnd_kmph_sym"))
 
-        super(VTG, self).__init__(parse_map)
+        super(VTG, self).__init__(parse_map,**kwargs)
 
 
 class WCV(NMEASentence):
     """ Waypoint Closure Velocity
     """
-    def __init__(self):
+    def __init__(self,**kwargs):
         parse_map = (
             ("Velocity", "velocity"),
             ("Velocity Units", "vel_units"), # Knots
             ("Waypoint ID", "waypoint_id"))
 
-        super(WCV, self).__init__(parse_map)
+        super(WCV, self).__init__(parse_map,**kwargs)
 
 
 class WNC(NMEASentence):
     """ Distance, Waypoint to Waypoint
     """
-    def __init__(self):
+    def __init__(self,**kwargs):
         parse_map = (
             ("Distance, Nautical Miles", "dist_nautical_miles"),
             ("Distance Nautical Miles Unit", "dist_naut_unit"),
@@ -655,13 +657,13 @@ class WNC(NMEASentence):
             ("Origin Waypoint ID", "waypoint_origin_id"),
             ("Destination Waypoint ID", "waypoint_dest_id"))
 
-        super(WNC, self).__init__(parse_map)
+        super(WNC, self).__init__(parse_map,**kwargs)
 
 
 class WPL(NMEASentence):
     """ Waypoint Location
     """
-    def __init__(self):
+    def __init__(self,**kwargs):
         parse_map = (
             ("Latitude", "lat"),
             ("Latitude Direction", "lat_dir"),
@@ -669,24 +671,24 @@ class WPL(NMEASentence):
             ("Longitude Direction", "lon_dir"),
             ("Waypoint ID", "waypoint_id"))
 
-        super(WPL, self).__init__(parse_map)
+        super(WPL, self).__init__(parse_map,**kwargs)
 
 
 class XTE(NMEASentence):
     """ Cross-Track Error, Measured
     """
-    def __init__(self):
+    def __init__(self,**kwargs):
         parse_map = (("General Warning Flag", "warning_flag"),
                      ("Lock flag (Not Used)", "lock_flag"),
                      ("Cross Track Error Distance", "cross_track_err_dist"),
                      ("Correction Direction (L or R)", "correction_dir"),
                      ("Distance Units", "dist_units"))
 
-        super(XTE, self).__init__(parse_map)
+        super(XTE, self).__init__(parse_map,**kwargs)
 
 
 class ZDA(NMEASentence):
-    def __init__(self):
+    def __init__(self,**kwargs):
         parse_map = (
             ("Timestamp", "timestamp"), # hhmmss.ss = UTC
             ("Day", "day"), # 01 to 31
@@ -696,37 +698,38 @@ class ZDA(NMEASentence):
             ("Local Zone Minutes Description", "local_zone_minutes")) # same sign as hours
         #("Checksum", "checksum"))
 
-        super(ZDA, self).__init__(parse_map)
+        super(ZDA, self).__init__(parse_map,**kwargs)
 
 # Implemented by Janez Stupar for Visionect
 class RSA(NMEASentence):
     """ Rudder Sensor Angle
     """
-    def __init__(self):
+    def __init__(self,**kwargs):
         parse_map = (
             ("Starboard rudder sensor","rsa_starboard","decimal"),
             ("Starboard rudder sensor status","rsa_starboard_status"),
             ("Port rudder sensor","rsa_port","decimal"),
             ("Port rudder sensor status","rsa_port_status"),
         )
-        super(RSA,self).__init__(parse_map)
+        super(RSA,self).__init__(parse_map,**kwargs)
 
 class HSC(NMEASentence):
     """ Heading Steering Command
     """
-    def __init__(self):
+    def __init__(self,**kwargs):
         parse_map = (
             ("Heading","heading_true","decimal"),
             ("True","true"),
             ("Heading Magnetic","heading_magnetic","decimal"),
             ("Magnetic","magnetic"),
         )
-        super(HSC,self).__init__(parse_map)
+        super(HSC,self).__init__(parse_map,**kwargs)
 
 class MWD(NMEASentence):
     """ Wind Direction
+    NMEA 0183 standard Wind Direction and Speed, with respect to north.
     """
-    def __init__(self):
+    def __init__(self,**kwargs):
         parse_map = (
             ("Wind direction true","direction_true","decimal"),
             ("True","true"),
@@ -737,212 +740,200 @@ class MWD(NMEASentence):
             ("Wind speed meters/second","wind_speed_meters","decimal"),
             ("Wind speed","meters"),
         )
-        super(MWD,self).__init__(parse_map)
+        super(MWD,self).__init__(parse_map,**kwargs)
 
 class MWV(NMEASentence):
     """ Wind Speed and Angle
+    NMEA 0183 standard Wind Speed and Angle, in relation to the vessel's
+bow/centerline.
     """
-    def __init__(self):
+    def __init__(self,**kwargs):
         parse_map = (
-            ("Wind angle","wind_angle","decimal"),
-            ("Reference","reference"), # relative (R)/true(T)
+            ("Wind angle","wind_angle","decimal"), #in relation to vessels centerline
+            ("Reference","reference"), # relative (R)/theoretical(T)
             ("Wind speed","wind_speed","decimal"),
             ("Wind speed units","wind_speed_units"), # K/M/N
             ("Status","status"),
         )
-        super(MWV,self).__init__(parse_map)
+        super(MWV,self).__init__(parse_map,**kwargs)
+
+class DBT(NMEASentence):
+    """ Depth Below Transducer
+    """
+    def __init__(self,**kwargs):
+        parse_map = (
+            ("Depth feet","depth_feet","decimal"),
+            ("Feet","feet"),
+            ("Depth meters","depth_meters","decimal"),
+            ("Meters","meters"),
+            ("Depth fathoms","depth_fathoms"),
+            ("fathoms","fathoms"),
+        )
+        super(DBT,self).__init__(parse_map,**kwargs)
+
+class DPT(NMEASentence):
+    """ Depth of Water
+    """
+    def __init__(self,**kwargs):
+        parse_map = (
+            ("Depth meters","depth","decimal"),
+            ("Offset from transducer","offset","decimal"),
+        )
+        super(DPT,self).__init__(parse_map,**kwargs)
 
 # ---------------------------------- Not Yet Implimented --------------------- #
 # ---------------------------------------------------------------------------- #
 
-#class DBT(NMEASentence):
-#    """ Depth Below Transducer
-#    """
-#    def __init__(self):
-#        parse_map = ()
-#        super(DBT).__init__(parse_map)
 
-#class DPT(NMEASentence):
-#    """ Heading - Deviation and Variation
-#    """
-#    def __init__(self):
-#        parse_map = ()
-#        super(DPT).__init__(parse_map)
 
 #class FSI(NMEASentence):
 #    """ Frequency Set Information
 #    """
-#    def __init__(self):
+#    def __init__(self,**kwargs):
 #        parse_map = ()
-#        super(FSI).__init__(parse_map)
+#        super(FSI).__init__(parse_map,**kwargs)
 
 #class GLC(NMEASentence):
 #    """ Geographic Position, Loran-C
 #    """
-#    def __init__(self):
+#    def __init__(self,**kwargs):
 #        parse_map = ()
-#        super(GLC).__init__(parse_map)
+#        super(GLC).__init__(parse_map,**kwargs)
 
 #class GXA(NMEASentence):
 #    """ TRANSIT Position
 #    """
-#    def __init__(self):
+#    def __init__(self,**kwargs):
 #        parse_map = ()
-#        super(GXA).__init__(parse_map)
-
-#class HSC(NMEASentence):
-#    """ Heading Steering Command
-#    """
-#    def __init__(self):
-#        parse_map = ()
-#        super(HSC).__init__(parse_map)
+#        super(GXA).__init__(parse_map,**kwargs)
 
 #class LCD(NMEASentence):
 #    """ Loran-C Signal Data
 #    """
-#    def __init__(self):
+#    def __init__(self,**kwargs):
 #        parse_map = ()
-#        super(LCD).__init__(parse_map)
+#        super(LCD).__init__(parse_map,**kwargs)
 
 #class MTA(NMEASentence):
 #    """ Air Temperature (to be phased out)
 #    """
-#    def __init__(self):
+#    def __init__(self,**kwargs):
 #        parse_map = ()
-#        super(MTA).__init__(parse_map)
+#        super(MTA).__init__(parse_map,**kwargs)
 
 #class MTW(NMEASentence):
 #    """ Water Temperature
 #    """
-#    def __init__(self):
+#    def __init__(self,**kwargs):
 #        parse_map = ()
-#        super(MTW).__init__(parse_map)
+#        super(MTW).__init__(parse_map,**kwargs)
 
-#class MWD(NMEASentence):
-#    """ Wind Direction
-#    """
-#    def __init__(self):
-#        parse_map = ()
-#        super(MWD).__init__(parse_map)
-
-#class MWV(NMEASentence):
-#    """ Wind Speed and Angle
-#    """
-#    def __init__(self):
-#        parse_map = ()
-#        super(MWV).__init__(parse_map)
 
 #class OLN(NMEASentence):
 #    """ Omega Lane Numbers
 #    """
-#    def __init__(self):
+#    def __init__(self,**kwargs):
 #        parse_map = ()
-#        super(OLN).__init__(parse_map)
+#        super(OLN).__init__(parse_map,**kwargs)
 
 #class OSD(NMEASentence):
 #    """ Own Ship Data
 #    """
-#    def __init__(self):
+#    def __init__(self,**kwargs):
 #        parse_map = ()
-#        super(OSD).__init__(parse_map)
+#        super(OSD).__init__(parse_map,**kwargs)
 
 #class ROT(NMEASentence):
 #    """ Rate of Turn
 #    """
-#    def __init__(self):
+#    def __init__(self,**kwargs):
 #        parse_map = ()
-#        super(ROT).__init__(parse_map)
+#        super(ROT).__init__(parse_map,**kwargs)
 
 #class RPM(NMEASentence):
 #    """ Revolutions
 #    """
-#    def __init__(self):
+#    def __init__(self,**kwargs):
 #        parse_map = ()
-#        super(RPM).__init__(parse_map)
+#        super(RPM).__init__(parse_map,**kwargs)
 
-#class RSA(NMEASentence):
-#    """ Rudder Sensor Angle
-#    """
-#    def __init__(self):
-#        parse_map = ()
-#        super(RSA).__init__(parse_map)
 
 #class RSD(NMEASentence):
 #    """ RADAR System Data
 #    """
-#    def __init__(self):
+#    def __init__(self,**kwargs):
 #        parse_map = ()
-#        super(RSD).__init__(parse_map)
+#        super(RSD).__init__(parse_map,**kwargs)
 
 #class SFI(NMEASentence):
 #    """ Scanning Frequency Information
 #    """
-#    def __init__(self):
+#    def __init__(self,**kwargs):
 #        parse_map = ()
-#        super(SFI).__init__(parse_map)
+#        super(SFI).__init__(parse_map,**kwargs)
 
 #class TTM(NMEASentence):
 #    """ Tracked Target Message
 #    """
-#    def __init__(self):
+#    def __init__(self,**kwargs):
 #        parse_map = ()
-#        super(TTM).__init__(parse_map)
+#        super(TTM).__init__(parse_map,**kwargs)
 
 #class VDR(NMEASentence):
 #    """ Set and Drift
 #    """
-#    def __init__(self):
+#    def __init__(self,**kwargs):
 #        parse_map = ()
-#        super(VDR).__init__(parse_map)
+#        super(VDR).__init__(parse_map,**kwargs)
 
 #class VHW(NMEASentence):
 #    """ Water Speed and Heading
 #    """
-#    def __init__(self):
+#    def __init__(self,**kwargs):
 #        parse_map = ()
-#        super(VHW).__init__(parse_map)
+#        super(VHW).__init__(parse_map,**kwargs)
 
 #class VLW(NMEASentence):
 #    """ Distance Traveled through the Water
 #    """
-#    def __init__(self):
+#    def __init__(self,**kwargs):
 #        parse_map = ()
-#        super(VLW).__init__(parse_map)
+#        super(VLW).__init__(parse_map,**kwargs)
 
 #class VPW(NMEASentence):
 #    """ Speed, Measured Parallel to Wind
 #    """
-#    def __init__(self):
+#    def __init__(self,**kwargs):
 #        parse_map = ()
-#        super(VPW).__init__(parse_map)
+#        super(VPW).__init__(parse_map,**kwargs)
 
 #class XDR(NMEASentence):
 #    """ Transducer Measurements
 #    """
-#    def __init__(self):
+#    def __init__(self,**kwargs):
 #        parse_map = ()
-#        super(XDR).__init__(parse_map)
+#        super(XDR).__init__(parse_map,**kwargs)
 
 #class XTR(NMEASentence):
 #    """ Cross-Track Error, Dead Reckoning
 #    """
-#    def __init__(self):
+#    def __init__(self,**kwargs):
 #        parse_map = ()
-#        super(XTR).__init__(parse_map)
+#        super(XTR).__init__(parse_map,**kwargs)
 
 #class ZFO(NMEASentence):
 #    """ UTC & Time from Origin Waypoint
 #    """
-#    def __init__(self):
+#    def __init__(self,**kwargs):
 #        parse_map = ()
-#        super(ZFO).__init__(parse_map)
+#        super(ZFO).__init__(parse_map,**kwargs)
 
 #class ZTG(NMEASentence):
 #    """ UTC & Time to Destination Waypoint
 #    """
-#    def __init__(self):
+#    def __init__(self,**kwargs):
 #        parse_map = ()
-#        super(ZTG).__init__(parse_map)
+#        super(ZTG).__init__(parse_map,**kwargs)
 
 
 # ---------------------------------------------------------------------------- #
@@ -952,7 +943,7 @@ class MWV(NMEASentence):
 #class ASD(NMEASentence):
 #    """ Auto-pilot system data (Unknown format)
 #    """
-#    def __init__(self):
+#    def __init__(self,**kwargs):
 #        parse_map = ()
 #        super(ASD).__init__()
 
@@ -963,9 +954,9 @@ class MWV(NMEASentence):
 #class DCN(NMEASentence):
 #    """ Decca Position (obsolete)
 #    """
-#    def __init__(self):
+#    def __init__(self,**kwargs):
 #        parse_map = ()
-#        super(DCN).__init__(parse_map)
+#        super(DCN).__init__(parse_map,**kwargs)
 
 
 # PROPRIETRY SENTENCES
@@ -974,7 +965,7 @@ class MWV(NMEASentence):
 class RME(NMEASentence):
     """ GARMIN Estimated position error
     """
-    def __init__(self):
+    def __init__(self,**kwargs):
         parse_map = (("Estimated Horiz. Position Error", "hpe"),
                      ("Estimated Horiz. Position Error Unit (M)", "hpe_unit"),
                      ("Estimated Vert. Position Error", "vpe"),
@@ -982,25 +973,25 @@ class RME(NMEASentence):
                      ("Estimated Horiz. Position Error", "osepe"),
                      ("Overall Spherical Equiv. Position Error", "osepe_unit"))
 
-        super(RME, self).__init__(parse_map)
+        super(RME, self).__init__(parse_map,**kwargs)
 
 
 class RMM(NMEASentence):
     """ GARMIN Map Datum
     """
-    def __init__(self):
+    def __init__(self,**kwargs):
         parse_map = (('Currently Active Datum', 'datum'),)
 
-        super(RMM, self).__init__(parse_map)
+        super(RMM, self).__init__(parse_map,**kwargs)
 
 
 class RMZ(NMEASentence):
     """ GARMIN Altitude Information
     """
-    def __init__(self):
+    def __init__(self,**kwargs):
         parse_map = (("Altitude", "altitude"),
                      ("Altitude Units (Feet)", "altitude_unit"),
                      ("Positional Fix Dimension (2=user, 3=GPS)",
                       "pos_fix_dim"))
 
-        super(RMZ, self).__init__(parse_map)
+        super(RMZ, self).__init__(parse_map,**kwargs)

@@ -6,7 +6,7 @@ from pynmea.exceptions import NoDataGivenError
 class NMEAStream(object):
     """ NMEAStream object is used to
     """
-    def __init__(self, stream_obj=None):
+    def __init__(self, stream_obj=None, deserialize = False):
         """ stream_obj should be a file like object.
             If the requirement is just to split data in memory, no stream_obj
             is required. Simply create an instance of this class and
@@ -14,6 +14,7 @@ class NMEAStream(object):
         """
         self.stream = stream_obj
         self.head = ''
+        self.deserialize = deserialize
 
     def get_strings(self, data=None, size=1024):
         """ Read and return sentences as strings
@@ -27,7 +28,7 @@ class NMEAStream(object):
         nmea_objects = []
         for nmea_str in str_data:
             try:
-                nmea_ob = self._get_type(nmea_str)()
+                nmea_ob = self._get_type(nmea_str)({'deserialize':self.deserialize})
             except TypeError:
                 # NMEA sentence was not recognised
                 continue
