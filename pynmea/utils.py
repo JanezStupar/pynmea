@@ -26,4 +26,9 @@ class NMEADeserializer(object):
 
 
     def deserialize_decimal(self,data):
-        return decimal.Decimal(data)
+        try:
+            if not data:
+                return decimal.Decimal('NaN')
+            return decimal.Decimal(data)
+        except Exception:
+            return decimal.Decimal('NaN')

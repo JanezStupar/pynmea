@@ -28,7 +28,7 @@ class NMEAStream(object):
         nmea_objects = []
         for nmea_str in str_data:
             try:
-                nmea_ob = self._get_type(nmea_str)({'deserialize':self.deserialize})
+                nmea_ob = self._get_type(nmea_str)(deserialize=self.deserialize)
             except TypeError:
                 # NMEA sentence was not recognised
                 continue
