@@ -781,6 +781,17 @@ class DPT(NMEASentence):
         )
         super(DPT,self).__init__(parse_map,**kwargs)
 
+class HDM(NMEASentence):
+    """
+    Heading, Magnetic
+    """
+    def __init__(self,**kwargs):
+        parse_map = (
+            ("Heading degrees","heading","decimal"),
+            ("Magnetic","magnetic"),
+        )
+        super(HDM,self).__init__(parse_map,**kwargs)
+
 # ---------------------------------- Not Yet Implimented --------------------- #
 # ---------------------------------------------------------------------------- #
 
