@@ -1,3 +1,4 @@
+import decimal
 import re
 from pynmea.utils import checksum_calc, NMEADeserializer
 
@@ -72,8 +73,134 @@ class NMEASentence(object):
         result = checksum_calc(self.nmea_sentence)
         return (result.upper() == self.checksum.upper())
 
+class STALKSentence(NMEASentence):
+    def __init__(self,**kwargs):
+        self.talker_id = 'ST'
+
+    def parse(self, stalk_str, ignore_err=False):
+        self._parse(stalk_str)
+
+    def _compute_compass_heading(self,U,VW):
+        """
+        Compass heading in degrees:
+            The two lower  bits of  U * 90 +
+            the six lower  bits of VW *  2 +
+            number of bits set in the two higher bits of U =
+            (U & 0x3)* 90 + (VW & 0x3F)* 2 + (U & 0xC ? (U & 0xC == 0xC ? 2 : 1): 0)
+        """
+
+        # Compute compass heading
+        tmp = U & 0xC
+        if not tmp == 0:
+            tmp = ((U & 0xC == 0xC) and (2,) or (1,))[0]
+        return decimal.Decimal((U & 0x3) * 90 + (VW & 0x3F) * 2 + tmp)
+
+    def _compute_turning_direction(self,U):
+        """
+          Turning direction:
+            Most significant bit of U = 1: Increasing heading, Ship turns right
+            Most significant bit of U = 0: Decreasing heading, Ship turns left
+        """
+        return U & 0x8
+
+    def _compute_rudder_position(self,RR):
+        """
+          Rudder position: RR degrees (positive values steer right,
+            negative values steer left. Example: 0xFE = 2 degrees left)
+        """
+        #Rudder position, positive value = right, negative=left
+        #conversion from hex to signed int has been copied from:
+        # http://stackoverflow.com/questions/385572/need-help-typecasting-in-python
+        return decimal.Decimal((RR + 2**7) % 2**8 - 2**7)
+
+# ---------------------------------------------------------------------------- #
+# SEATALK statement parsing according to the gadgetpool.de
+# SEATALK/NMEA USB link.
+# ---------------------------------------------------------------------------- #
+class S84(STALKSentence):
+    """
+    SEATALK Datagram 84, Rudder position (see also command 9C)
+
+    Interpreted according to http://www.thomasknauf.de/rap/seatalk2.htm
+    """
+
+    def parse(self,stalk_str,**kwargs):
+        """
+        SEATALK statement mask:
+            STALK,84,U6,VW,XY,0Z,0M,RR,SS,TT
+
+              Autopilot course in degrees:
+                The two higher bits of  V * 90 + XY / 2
+                 Z & 0x2 = 0 : Autopilot in Standby-Mode
+                 Z & 0x2 = 2 : Autopilot in Auto-Mode
+                 Z & 0x4 = 4 : Autopilot in Vane Mode (WindTrim), requires regular '10' datagrams
+                 Z & 0x8 = 8 : Autopilot in Track Mode
+              M: Alarms + audible beeps
+                M & 0x04 = 4 : Off course
+                M & 0x08 = 8 : Wind Shift
+              SS & 0x01 : when set, turns off heading display on 600R control.
+              SS & 0x02 : always on with 400G
+              SS & 0x08 : displays 'NO DATA' on 600R
+              SS & 0x10 : displays 'LARGE XTE' on 600R
+              SS & 0x80 : Displays 'Auto Rel' on 600R
+              TT : Always 0x08 on 400G computer, always 0x05 on 150(G) computer
+        """
+        super(S84,self).parse(stalk_str)
+
+        self.sen_type = 'S84'
+
+        # Compute compass heading
+        U = int(self.parts[2][0],16)
+        VW = int(self.parts[3],16)
+        self.heading = self._compute_compass_heading(U,VW)
+
+        self.turning_direction = self._compute_turning_direction(U)
+
+        #Autopilot course in degrees
+        V = int(self.parts[3][0],16)
+        XY = int(self.parts[4],16)
+        Z = int(self.parts[5][1],16)
+        self.course = decimal.Decimal((V>>2) * 90 + XY/2)
+
+        #Autopilot mode
+        self.autopilot_mode = Z
+
+        #Alarm
+        M = int(self.parts[6][1],16)
+        self.alarm = M
+
+        #Rudder position, positive value = right, negative=left
+        #conversion from hex to signed int has been copied from:
+        # http://stackoverflow.com/questions/385572/need-help-typecasting-in-python
+        RR = int(self.parts[7],16)
+        self.rudder = self._compute_rudder_position(RR)
+
+        #SS and TT not implemented at the moment, since it doesn't make sense
+
+class S9C(STALKSentence):
+    """
+    SEATALK Datagram 9C,Compass heading and Rudder position (see also command 84)
+
+    Interpreted according to http://www.thomasknauf.de/rap/seatalk2.htm
+    """
+
+    def parse(self,stalk_str,**kwargs):
+        """
+        SEATALK statement mask:
+            STALK,9C,U1,VW,RR
+        """
+
+        super(S9C,self).parse(stalk_str)
+        self.sen_type = 'S9C'
+
+        U = int(self.parts[2][0],16)
+        VW =  int(self.parts[3],16)
+        RR = int(self.parts[4],16)
 
 
+        self.heading = self._compute_compass_heading(U,VW)
+        self.turning_direction = self._compute_turning_direction(U)
+        self.rudder = self._compute_rudder_position(RR)
 
 # ---------------------------------------------------------------------------- #
 # Here are all the currently supported sentences. All should eventually be

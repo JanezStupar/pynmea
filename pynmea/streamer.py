@@ -69,7 +69,14 @@ class NMEAStream(object):
             We can always catch the error later if the user wishes to supress
             errors.
         """
-        sen_type = sentence.split(',')[0].lstrip('$')[-3:]
+
+        #modified tu support Gadgetpool.de SEATALK/NMEA Usb bridge
+        sentence = sentence.split(',')
+        sen_type = sentence[0].lstrip('$')
+        if sen_type == 'STALK':
+            sen_type = 'S'+sentence[1]
+        else:
+            sen_type = sen_type[-3:]
         sen_mod = __import__('pynmea.nmea', fromlist=[sen_type])
         sen_obj = getattr(sen_mod, sen_type, None)
         return sen_obj
