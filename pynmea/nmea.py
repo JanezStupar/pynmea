@@ -20,7 +20,6 @@ class NMEASentence(object):
             parts attribute on the class and fill in the sentence type in
             sen_type
         """
-        self.nmea_sentence = nmea_str
         self.parts = nmea_str.split(',')
 
         chksum_regex = re.compile(r".+((\*{1})(?i)(?P<chksum>[0-9a-f]{2}))$")
@@ -39,6 +38,44 @@ class NMEASentence(object):
             self.parts[0] = self.parts[0][1:]
         self.sen_type = self.parts[0][-3:]
         self.talker_id = self.parts[0][:2]
+
+    def construct(self,**kwargs):
+        """
+        Construct an empty object for serialization.
+
+        The object is built according to the parse map. Defaults are taken
+        from the kwargs.
+        """
+
+        talker_id = kwargs.get('talker_id','II')
+
+        if not hasattr(self,'parts'):
+            self.parts = []
+
+        self.talker_id = talker_id
+        self.sen_type = str(self.__class__).split('.')[-1].split('\'')[0]
+        self.parts.insert(0, talker_id + self.sen_type)
+        for index,item in enumerate(self.parse_map,1):
+            value = kwargs.get(item[1],None)
+            if not value:
+                setattr(self,item[1],'')
+                self.parts.insert(index,'')
+            elif self.deserialize and len(item) > 2:
+                deserialized_val = self.deserializer.deserialize(value,item[2])
+                setattr(self,item[1],deserialized_val)
+                self.parts.insert(index,deserialized_val)
+            else:
+                setattr(self,item[1],value)
+                self.parts.insert(index,value)
+
+
+    @property
+    def nmea_sentence(self):
+        """
+        Dump the object data into a NMEA sentence
+        """
+        tmp=(',').join(self.parts)
+        return '$' + tmp + '*' + checksum_calc(tmp)
 
     def parse(self, nmea_str, ignore_err=False):
         """ Use the parse map. Parse map should be in the format:
