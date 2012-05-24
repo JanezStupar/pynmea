@@ -1,3 +1,4 @@
+# coding=utf-8
 import decimal
 import re
 from pynmea.utils import checksum_calc, NMEADeserializer
@@ -54,7 +55,7 @@ class NMEASentence(object):
 
         self.talker_id = talker_id
         self.sen_type = str(self.__class__).split('.')[-1].split('\'')[0]
-        self.parts.insert(0, talker_id + self.sen_type)
+        self.parts.insert(0, self.talker_id + self.sen_type)
         for index,item in enumerate(self.parse_map,1):
             value = kwargs.get(item[1],None)
             if not value:
@@ -116,6 +117,9 @@ class STALKSentence(NMEASentence):
 
     def parse(self, stalk_str, ignore_err=False):
         self._parse(stalk_str)
+
+    def construct(self,**kwargs):
+        raise NotImplementedError
 
     def _compute_compass_heading(self,U,VW):
         """
@@ -238,6 +242,137 @@ class S9C(STALKSentence):
         self.heading = self._compute_compass_heading(U,VW)
         self.turning_direction = self._compute_turning_direction(U)
         self.rudder = self._compute_rudder_position(RR)
+
+class S86(STALKSentence):
+    """
+    Seatalk Datagram 86, Remote control for autopilot.
+    """
+
+    def parse(self,stalk_str,**kwargs):
+        """
+        WARNING! Not all options are necessarily implemented!
+
+        This sentence is in a prototype phase.
+
+        SEATALK statement mask:
+            86  X1  YY  yy
+
+        X=1: Sent by Z101 remote control to increment/decrement
+                          course of autopilot
+             11  05  FA     -1
+             11  06  F9    -10
+             11  07  F8     +1
+             11  08  F7    +10
+             11  20  DF     +1 &  -1
+             11  21  DE     -1 & -10
+             11  22  DD     +1 & +10
+             11  28  D7    +10 & -10
+             11  45  BA     -1        pressed longer than 1 second
+             11  46  B9    -10        pressed longer than 1 second
+             11  47  B8     +1        pressed longer than 1 second
+             11  48  B7    +10        pressed longer than 1 second
+             11  60  DF     +1 &  -1  pressed longer than 1 second
+             11  61  9E     -1 & -10  pressed longer than 1 second
+             11  62  9D     +1 & +10  pressed longer than 1 second
+             11  64  9B    +10 & -10  pressed longer than 1 second (why not 11 68 97 ?)
+
+        Sent by autopilot (X=0: ST 1000+,  X=2: ST4000+ or ST600R)
+             X1  01  FE    Auto
+             X1  02  FD    Standby
+             X1  03  FC    Track
+             X1  04  FB    disp (in display mode or page in auto chapter = advance)
+             X1  05  FA     -1 (in auto mode)
+             X1  06  F9    -10 (in auto mode)
+             X1  07  F8     +1 (in auto mode)
+             X1  08  F7    +10 (in auto mode)
+             X1  09  F6     -1 (in resp or rudder gain mode)
+             X1  0A  F5     +1 (in resp or rudder gain mode)
+             X1  21  DE     -1 & -10 (port tack, doesn´t work on ST600R?)
+             X1  22  DD     +1 & +10 (stb tack)
+             X1  23  DC    Standby & Auto (wind mode)
+             X1  28  D7    +10 & -10 (in auto mode)
+             X1  2E  D1     +1 & -1 (Response Display)
+             X1  41  BE    Auto pressed longer
+             X1  42  BD    Standby pressed longer
+             X1  43  BC    Track pressed longer
+             X1  44  BB    Disp pressed longer
+             X1  45  BA     -1 pressed longer (in auto mode)
+             X1  46  B9    -10 pressed longer (in auto mode)
+             X1  47  B8     +1 pressed longer (in auto mode)
+             X1  48  B7    +10 pressed longer (in auto mode)
+             X1  63  9C    Standby & Auto pressed longer (previous wind angle)
+             X1  68  97    +10 & -10 pressed longer (in auto mode)
+             X1  6E  91     +1 & -1 pressed longer (Rudder Gain Display)
+             X1  80  7F     -1 pressed (repeated 1x per second)
+             X1  81  7E     +1 pressed (repeated 1x per second)
+             X1  82  7D    -10 pressed (repeated 1x per second)
+             X1  83  7C    +10 pressed (repeated 1x per second)
+             X1  84  7B     +1, -1, +10 or -10 released
+
+        """
+        raise NotImplementedError
+
+    def construct(self,**kwargs):
+        """
+        This sentence is in a prototype phase
+        """
+        X = 0 #TODO: Autopilot type is hardcoded
+
+        self.talker_id = 'ST'
+        self.sen_type = 'ALK'
+
+        if not hasattr(self,'parts'):
+            self.parts = []
+
+        self.parts.insert(0, self.talker_id + self.sen_type)
+        self.parts.insert(1,'86')
+        self.parts.insert(2,'01')
+
+        mode = kwargs.get('operation',None)
+        if not mode:
+            raise NotImplementedError
+
+        if mode == 'autopilot_mode':
+            new_mode=kwargs.get('autopilot_mode',None)
+
+            if new_mode == '0':
+                self.parts.insert(3,'02')
+                self.parts.insert(4,'FD')
+                return
+            elif new_mode == '2':
+                self.parts.insert(3,'01')
+                self.parts.insert(4,'FE')
+                return
+            else:
+                raise NotImplementedError
+
+        # Note we currently only support auto mode!
+        if mode == 'course_change':
+            new_course = kwargs.get('course_change')
+
+            if str(new_course) == '-10':
+                self.parts.insert(3,'06')
+                self.parts.insert(4,'F9')
+                return
+            elif str(new_course) == '-1':
+                self.parts.insert(3,'05')
+                self.parts.insert(4,'FA')
+                return
+            elif str(new_course) == '1':
+                self.parts.insert(3,'07')
+                self.parts.insert(4,'F8')
+                return
+            elif str(new_course) == '10':
+                self.parts.insert(3,'08')
+                self.parts.insert(4,'F7')
+                return
+            else:
+                raise NotImplementedError
+
+        raise NotImplementedError
+
+
+
 
 # ---------------------------------------------------------------------------- #
 # Here are all the currently supported sentences. All should eventually be
