@@ -905,11 +905,11 @@ class VBW(NMEASentence):
     """
     def __init__(self,**kwargs):
         parse_map = (
-            ("Longitudinal Water Speed", "lon_water_spd"), # Knots
-            ("Transverse Water Speed", "trans_water_spd"), # Knots
+            ("Longitudinal Water Speed", "lon_water_spd","decimal"), # Knots
+            ("Transverse Water Speed", "trans_water_spd","decimal"), # Knots
             ("Water Speed Data Validity", "data_validity_water_spd"),
-            ("Longitudinal Ground Speed", "lon_grnd_spd"), # Knots
-            ("Transverse Ground Speed", "trans_grnd_spd"), # Knots
+            ("Longitudinal Ground Speed", "lon_grnd_spd","decimal"), # Knots
+            ("Transverse Ground Speed", "trans_grnd_spd","decimal"), # Knots
             ("Ground Speed Data Validity", "data_validity_grnd_spd"))
             #("Checksum", "checksum"))
         super(VBW, self).__init__(parse_map,**kwargs)
@@ -1091,6 +1091,32 @@ class HDM(NMEASentence):
         )
         super(HDM,self).__init__(parse_map,**kwargs)
 
+class MTW(NMEASentence):
+    """ Water Temperature
+    """
+    def __init__(self,**kwargs):
+        parse_map = (
+            ('Water temperature','temperature','decimal'),
+            ('Unit of measurement','units')
+        )
+        super(MTW,self).__init__(parse_map,**kwargs)
+
+class VHW(NMEASentence):
+    """ Water Speed and Heading
+    """
+    def __init__(self,**kwargs):
+        parse_map = (
+            ('Heading true degrees','heading_true','decimal'),
+            ('heading true','true'),
+            ('Heading Magnetic degrees','heading_magnetic','decimal'),
+            ('Magnetic','magnetic'),
+            ('Water speed knots','water_speed_knots','decimal'),
+            ('Knots','knots'),
+            ('Water speed kilometers','water_speed_km','decimal'),
+            ('Kilometers','kilometers'),
+        )
+        super(VHW,self).__init__(parse_map,**kwargs)
+
 # ---------------------------------- Not Yet Implimented --------------------- #
 # ---------------------------------------------------------------------------- #
 
@@ -1131,12 +1157,6 @@ class HDM(NMEASentence):
 #        parse_map = ()
 #        super(MTA).__init__(parse_map,**kwargs)
 
-#class MTW(NMEASentence):
-#    """ Water Temperature
-#    """
-#    def __init__(self,**kwargs):
-#        parse_map = ()
-#        super(MTW).__init__(parse_map,**kwargs)
 
 
 #class OLN(NMEASentence):
@@ -1196,12 +1216,6 @@ class HDM(NMEASentence):
 #        parse_map = ()
 #        super(VDR).__init__(parse_map,**kwargs)
 
-#class VHW(NMEASentence):
-#    """ Water Speed and Heading
-#    """
-#    def __init__(self,**kwargs):
-#        parse_map = ()
-#        super(VHW).__init__(parse_map,**kwargs)
 
 #class VLW(NMEASentence):
 #    """ Distance Traveled through the Water
