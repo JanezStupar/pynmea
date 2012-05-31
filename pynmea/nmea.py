@@ -990,11 +990,11 @@ class ZDA(NMEASentence):
     def __init__(self,**kwargs):
         parse_map = (
             ("Timestamp", "timestamp"), # hhmmss.ss = UTC
-            ("Day", "day"), # 01 to 31
-            ("Month", "month"), # 01 to 12
-            ("Year", "year"), # Year = YYYY
-            ("Local Zone Description", "local_zone"), # 00 to +/- 13 hours
-            ("Local Zone Minutes Description", "local_zone_minutes")) # same sign as hours
+            ("Day", "day","decimal"), # 01 to 31
+            ("Month", "month", "decimal"), # 01 to 12
+            ("Year", "year", "decimal"), # Year = YYYY
+            ("Local Zone Description", "local_zone", "decimal"), # 00 to +/- 13 hours
+            ("Local Zone Minutes Description", "local_zone_minutes", "decimal")) # same sign as hours
         #("Checksum", "checksum"))
 
         super(ZDA, self).__init__(parse_map,**kwargs)
@@ -1117,6 +1117,18 @@ class VHW(NMEASentence):
         )
         super(VHW,self).__init__(parse_map,**kwargs)
 
+class VLW(NMEASentence):
+    """ Distance Traveled through the Water
+    """
+    def __init__(self,**kwargs):
+        parse_map = (
+            ('Water trip distance','trip_distance','decimal'),
+            ('Trip distance nautical miles','trip_distance_miles'),
+            ('Water trip distance since reset','trip_distance_reset','decimal'),
+            ('Trip distance nautical miles since reset','trip_distance_reset_miles'),
+        )
+        super(VLW,self).__init__(parse_map,**kwargs)
+
 # ---------------------------------- Not Yet Implimented --------------------- #
 # ---------------------------------------------------------------------------- #
 
@@ -1216,13 +1228,6 @@ class VHW(NMEASentence):
 #        parse_map = ()
 #        super(VDR).__init__(parse_map,**kwargs)
 
-
-#class VLW(NMEASentence):
-#    """ Distance Traveled through the Water
-#    """
-#    def __init__(self,**kwargs):
-#        parse_map = ()
-#        super(VLW).__init__(parse_map,**kwargs)
 
 #class VPW(NMEASentence):
 #    """ Speed, Measured Parallel to Wind
