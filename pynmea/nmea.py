@@ -920,13 +920,13 @@ class VTG(NMEASentence):
     """
     def __init__(self,**kwargs):
         parse_map = (
-            ("True Track made good", "true_track"),
+            ("True Track made good", "true_track","decimal"),
             ("True Track made good symbol", "true_track_sym"),
-            ("Magnetic Track made good", "mag_track"),
+            ("Magnetic Track made good", "mag_track","decimal"),
             ("Magnetic Track symbol", "mag_track_sym"),
-            ("Speed over ground knots", "spd_over_grnd_kts"),
+            ("Speed over ground knots", "spd_over_grnd_kts","decimal"),
             ("Speed over ground symbol", "spd_over_grnd_kts_sym"),
-            ("Speed over ground kmph", "spd_over_grnd_kmph"),
+            ("Speed over ground kmph", "spd_over_grnd_kmph","decimal"),
             ("Speed over ground kmph symbol", "spd_over_grnd_kmph_sym"))
 
         super(VTG, self).__init__(parse_map,**kwargs)
