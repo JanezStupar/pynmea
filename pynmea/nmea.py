@@ -1065,7 +1065,7 @@ class DBT(NMEASentence):
             ("Feet","feet"),
             ("Depth meters","depth_meters","decimal"),
             ("Meters","meters"),
-            ("Depth fathoms","depth_fathoms"),
+            ("Depth fathoms","depth_fathoms","decimal"),
             ("fathoms","fathoms"),
         )
         super(DBT,self).__init__(parse_map,**kwargs)
