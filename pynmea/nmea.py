@@ -319,12 +319,12 @@ class S86(STALKSentence):
         X = 0 #TODO: Autopilot type is hardcoded
 
         self.talker_id = 'ST'
-        self.sen_type = 'ALK'
+        self.sen_type = 'S86'
 
         if not hasattr(self,'parts'):
             self.parts = []
 
-        self.parts.insert(0, self.talker_id + self.sen_type)
+        self.parts.insert(0, 'STALK')
         self.parts.insert(1,'86')
         self.parts.insert(2,'01')
 
