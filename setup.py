@@ -1,7 +1,7 @@
 from distutils.core import setup
 
 setup(name="pynmea",
-      version="0.3.0",
+      version="0.4a.0",
       description="Python NMEA Library",
       author="Becky Lewis",
       author_email="pynmea@scaryclam.co.uk",
