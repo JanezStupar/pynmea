@@ -26,7 +26,7 @@ class TestNMEAParse(unittest.TestCase):
         self.assertEquals("GP", p.talker_id)
         self.assertEquals("GLL", p.sen_type)
         self.assertEquals(p.parts,
-                          ['GLL', '3751.65', 'S', '14507.36', 'E'])
+                          ['GPGLL', '3751.65', 'S', '14507.36', 'E'])
 
     def test_parse(self):
         parse_map = (("Latitude", "lat"),
@@ -40,7 +40,7 @@ class TestNMEAParse(unittest.TestCase):
         self.assertEquals("GP", p.talker_id)
         self.assertEquals("GLL", p.sen_type)
         self.assertEquals(p.parts,
-                          ['GLL', '3751.65', 'S', '14507.36', 'E'])
+                          ['GPGLL', '3751.65', 'S', '14507.36', 'E'])
         self.assertEquals(p.lat, '3751.65')
         self.assertEquals(p.lat_dir, 'S')
         self.assertEquals(p.lon, '14507.36')
@@ -52,7 +52,7 @@ class TestNMEAParse(unittest.TestCase):
         nmea_str = "$GPGLL,3751.65,S,14507.36,E*77"
         p = NMEASentence(parse_map)
         p.checksum = '77'
-        p.nmea_sentence = nmea_str
+        p.parse(nmea_str)
         result = p.check_chksum()
 
         self.assertTrue(result)
@@ -62,7 +62,7 @@ class TestNMEAParse(unittest.TestCase):
         nmea_str = "$GPGLL,3751.65,S,14507.36,E*78"
         p = NMEASentence(parse_map)
         p.checksum = '78'
-        p.nmea_sentence = nmea_str
+        p.parse(nmea_str)
         result = p.check_chksum()
 
         self.assertFalse(result)
@@ -72,7 +72,7 @@ class TestNMEAParse(unittest.TestCase):
         nmea_str = "$GPGLL,3751.65,S,14507.36,W*77"
         p = NMEASentence(parse_map)
         p.checksum = '77'
-        p.nmea_sentence = nmea_str
+        p.parse(nmea_str)
         result = p.check_chksum()
 
         self.assertFalse(result)
@@ -219,7 +219,7 @@ class TestBEC(unittest.TestCase):
         """ No FAA mode indicator
         """
         p = BEC()
-        p.parse("BEC,220516,5130.02,N,00046.34,W,213.8,T,218.0,M,0004.6,N,EGLM*11")
+        p.parse("GPBEC,220516,5130.02,N,00046.34,W,213.8,T,218.0,M,0004.6,N,EGLM*11")
 
         self.assertEquals("GP", p.talker_id)
         self.assertEquals("BEC", p.sen_type)
@@ -241,7 +241,7 @@ class TestBEC(unittest.TestCase):
         """ WITH FAA mode indicator
         """
         p = BEC()
-        p.parse("BEC,220516,5130.02,N,00046.34,W,213.8,T,218.0,M,0004.6,N,EGLM,X*11")
+        p.parse("GPBEC,220516,5130.02,N,00046.34,W,213.8,T,218.0,M,0004.6,N,EGLM,X*11")
 
         self.assertEquals("GP", p.talker_id)
         self.assertEquals("BEC", p.sen_type)
@@ -275,7 +275,7 @@ class TestBOD(unittest.TestCase):
         self.assertEquals("GP", p.talker_id)
         self.assertEquals("BOD", p.sen_type)
         self.assertEquals(p.parts,
-                          ['BOD', '045.', 'T', '023.', 'M', 'DEST', 'START'])
+                          ['GPBOD', '045.', 'T', '023.', 'M', 'DEST', 'START'])
         self.assertEquals(p.bearing_t, '045.')
         self.assertEquals(p.bearing_t_type, 'T')
         self.assertEquals(p.bearing_mag, '023.')
@@ -460,7 +460,7 @@ class TestGLL(unittest.TestCase):
 
     def test_checksum_passes2(self):
         p = GLL()
-        p.nmea_sentence = "$GPGLL,3751.65,S,14507.36,E*77"
+        p.parse("$GPGLL,3751.65,S,14507.36,E*77")
         p.checksum = '77'
 
         result = p.check_chksum()
@@ -468,7 +468,7 @@ class TestGLL(unittest.TestCase):
 
     def test_checksum_fails2(self):
         p = GLL()
-        p.nmea_sentence = "$GPGLL,3751.65,S,14507.36,E*78"
+        p.parse("$GPGLL,3751.65,S,14507.36,E*78")
         p.checksum = '78'
 
         result = p.check_chksum()
@@ -519,7 +519,7 @@ class TestGSA(unittest.TestCase):
     def test_checksum_passes(self):
         p = GSA()
         p.checksum = '39'
-        p.nmea_sentence = "$GPGSA,A,3,04,05,,09,12,,,24,,,,,2.5,1.3,2.1*39"
+        p.parse("$GPGSA,A,3,04,05,,09,12,,,24,,,,,2.5,1.3,2.1*39")
 
         result = p.check_chksum()
 
@@ -528,7 +528,7 @@ class TestGSA(unittest.TestCase):
     def test_checksum_fails(self):
         p = GSA()
         p.checksum = '38'
-        p.nmea_sentence = "$GPGSA,A,3,04,05,,09,12,,,24,,,,,2.5,1.3,2.1*38"
+        p.parse("$GPGSA,A,3,04,05,,09,12,,,24,,,,,2.5,1.3,2.1*38")
 
         result = p.check_chksum()
 
@@ -571,8 +571,8 @@ class TestGSV(unittest.TestCase):
 
     def test_checksum_passes(self):
         p = GSV()
+        p.parse("$GPGSV,3,1,11,03,03,111,00,04,15,270,00,06,01,010,00,13,06,292,00*74")
         p.checksum = '74'
-        p.nmea_sentence = "$GPGSV,3,1,11,03,03,111,00,04,15,270,00,06,01,010,00,13,06,292,00*74"
 
         result = p.check_chksum()
 
@@ -580,8 +580,8 @@ class TestGSV(unittest.TestCase):
 
     def test_checksum_fails(self):
         p = GSV()
+        p.parse("$GPGSV,3,1,11,03,03,111,00,04,15,270,00,06,01,010,00,13,06,292,00*74")
         p.checksum = '73'
-        p.nmea_sentence = "$GPGSV,3,1,11,03,03,111,00,04,15,270,00,06,01,010,00,13,06,292,00*74"
 
         result = p.check_chksum()
 
@@ -611,7 +611,7 @@ class TestHDG(unittest.TestCase):
     def test_checksum_passes(self):
         p = HDG()
         p.checksum = '7F'
-        p.nmea_sentence = "$GPHDG,190.7,,E,0.0,E*7F"
+        p.parse("$GPHDG,190.7,,E,0.0,E*7F")
 
         result = p.check_chksum()
 
@@ -620,7 +620,7 @@ class TestHDG(unittest.TestCase):
     def test_checksum_fails(self):
         p = HDG()
         p.checksum = '7E'
-        p.nmea_sentence = "$GPHDG,190.7,,E,0.0,E*7E"
+        p.parse("$GPHDG,190.7,,E,0.0,E*7E")
 
         result = p.check_chksum()
 
@@ -647,7 +647,7 @@ class TestHDT(unittest.TestCase):
     def test_checksum_passes(self):
         p = HDT()
         p.checksum = '02'
-        p.nmea_sentence = '$GPHDT,227.66,T*02'
+        p.parse('$GPHDT,227.66,T*02')
 
         result = p.check_chksum()
 
@@ -656,7 +656,7 @@ class TestHDT(unittest.TestCase):
     def test_checksum_fails(self):
         p = HDT()
         p.checksum = '03'
-        p.nmea_sentence = '$GPHDT,227.66,T*03'
+        p.parse('$GPHDT,227.66,T*03')
 
         result = p.check_chksum()
 
@@ -695,7 +695,7 @@ class TestGPR00(unittest.TestCase):
     def test_checksum_passes(self):
         p = R00()
         p.checksum = '58'
-        p.nmea_sentence = "$GPR00,EGLL,EGLM,EGTB,EGUB,EGTK,MBOT,EGTB,,,,,,,*58"
+        p.parse("$GPR00,EGLL,EGLM,EGTB,EGUB,EGTK,MBOT,EGTB,,,,,,,*58")
 
         result = p.check_chksum()
 
@@ -704,7 +704,7 @@ class TestGPR00(unittest.TestCase):
     def test_checksum_fails(self):
         p = R00()
         p.checksum = '57'
-        p.nmea_sentence = "$GPR00,EGLL,EGLM,EGTB,EGUB,EGTK,MBOT,EGTB,,,,,,,*57"
+        p.parse("$GPR00,EGLL,EGLM,EGTB,EGUB,EGTK,MBOT,EGTB,,,,,,,*57")
 
         result = p.check_chksum()
 
@@ -740,14 +740,14 @@ class TestRMA(unittest.TestCase):
     def test_checksum_passes(self):
         p = RMA()
         p.checksum = '51'
-        p.nmea_sentence = '$GPRMA,A,4630.129,N,147.372,W,,,12.2,5,7,N*51'
+        p.parse('$GPRMA,A,4630.129,N,147.372,W,,,12.2,5,7,N*51')
         result = p.check_chksum()
         self.assertTrue(result)
 
     def test_checksum_fails(self):
         p = RMA()
         p.checksum = '52'
-        p.nmea_sentence = '$GPRMA,A,4630.129,N,147.372,W,,,12.2,5,7,N*52'
+        p.parse('$GPRMA,A,4630.129,N,147.372,W,,,12.2,5,7,N*52')
         result = p.check_chksum()
         self.assertFalse(result)
 
@@ -830,14 +830,14 @@ class TestRMB(unittest.TestCase):
     def test_checksum_passes(self):
         p = RMB()
         p.checksum = '20'
-        p.nmea_sentence = '$GPRMB,A,0.66,L,003,004,4917.24,N,12309.57,W,001.3,052.5,000.5,V*20'
+        p.parse('$GPRMB,A,0.66,L,003,004,4917.24,N,12309.57,W,001.3,052.5,000.5,V*20')
         result = p.check_chksum()
         self.assertTrue(result)
 
     def test_checksum_fails(self):
         p = RMB()
         p.checksum = '21'
-        p.nmea_sentence = '$GPRMB,A,0.66,L,003,004,4917.24,N,12309.57,W,001.3,052.5,000.5,V*21'
+        p.parse('$GPRMB,A,0.66,L,003,004,4917.24,N,12309.57,W,001.3,052.5,000.5,V*21')
         result = p.check_chksum()
         self.assertFalse(result)
 
@@ -909,14 +909,14 @@ class TestRMC(unittest.TestCase):
     def test_checksum_passes(self):
         p = RMC()
         p.checksum = '70'
-        p.nmea_sentence = '$GPRMC,220516,A,5133.82,N,00042.24,W,173.8,231.8,130694,004.2,W*70'
+        p.parse('$GPRMC,220516,A,5133.82,N,00042.24,W,173.8,231.8,130694,004.2,W*70')
         result = p.check_chksum()
         self.assertTrue(result)
 
     def test_checksum_fails(self):
         p = RMC()
         p.checksum = '71'
-        p.nmea_sentence = '$GPRMC,220516,A,5133.82,N,00042.24,W,173.8,231.8,130694,004.2,W*71'
+        p.parse('$GPRMC,220516,A,5133.82,N,00042.24,W,173.8,231.8,130694,004.2,W*71')
         result = p.check_chksum()
         self.assertFalse(result)
 
@@ -960,7 +960,7 @@ class TestRTE(unittest.TestCase):
     def test_checksum_passes(self):
         p = RTE()
         p.checksum = "73"
-        p.nmea_sentence = "$GPRTE,2,1,c,0,PBRCPK,PBRTO,PTELGR,PPLAND,PYAMBU,PPFAIR,PWARRN,PMORTL,PLISMR*73"
+        p.parse('$GPRTE,2,1,c,0,PBRCPK,PBRTO,PTELGR,PPLAND,PYAMBU,PPFAIR,PWARRN,PMORTL,PLISMR*73')
 
         result = p.check_chksum()
         self.assertTrue(result)
@@ -968,7 +968,7 @@ class TestRTE(unittest.TestCase):
     def test_checksum_fails(self):
         p = RTE()
         p.checksum = "74"
-        p.nmea_sentence = "$GPRTE,2,1,c,0,PBRCPK,PBRTO,PTELGR,PPLAND,PYAMBU,PPFAIR,PWARRN,PMORTL,PLISMR*74"
+        p.parse("$GPRTE,2,1,c,0,PBRCPK,PBRTO,PTELGR,PPLAND,PYAMBU,PPFAIR,PWARRN,PMORTL,PLISMR*74")
 
         result = p.check_chksum()
         self.assertFalse(result)
@@ -987,7 +987,7 @@ class TestSTN(unittest.TestCase):
 
         self.assertEquals("GP", p.talker_id)
         self.assertEquals("STN", p.sen_type)
-        self.assertEquals("10", p.talker_id)
+        self.assertEquals("10", p.talker_id_num)
 
     def test_parses_map2(self):
         p = STN()
@@ -995,7 +995,7 @@ class TestSTN(unittest.TestCase):
 
         self.assertEquals("GP", p.talker_id)
         self.assertEquals("STN", p.sen_type)
-        self.assertEquals("10", p.talker_id)
+        self.assertEquals("10", p.talker_id_num)
         self.assertEquals("73", p.checksum)
 
 
@@ -1132,7 +1132,7 @@ class TestZDA(unittest.TestCase):
     def test_checksum_passes(self):
         p = ZDA()
         p.checksum = '5B'
-        p.nmea_sentence = '$GPZDA,025959.000,01,01,1970,,*5B'
+        p.parse('$GPZDA,025959.000,01,01,1970,,*5B')
 
         result = p.check_chksum()
 
@@ -1141,7 +1141,7 @@ class TestZDA(unittest.TestCase):
     def test_checksum_fails(self):
         p = ZDA()
         p.checksum = 'b5'
-        p.nmea_sentence = '$GPZDA,025959.000,01,01,1970,,*b5'
+        p.parse('$GPZDA,025959.000,01,01,1970,,*b5')
 
         result = p.check_chksum()
 
@@ -1168,7 +1168,7 @@ class TestWCV(unittest.TestCase):
     def test_checksum_passes(self):
         p = WCV()
         p.checksum = '1C'
-        p.nmea_sentence = '$GPWCV,2.3,N,ABCD*1C'
+        p.parse('$GPWCV,2.3,N,ABCD*1C')
 
         result = p.check_chksum()
 
@@ -1177,7 +1177,7 @@ class TestWCV(unittest.TestCase):
     def test_checksum_fails(self):
         p = WCV()
         p.checksum = '1B'
-        p.nmea_sentence = '$GPWCV,2.3,N,ABCD*1B'
+        p.parse('$GPWCV,2.3,N,ABCD*1B')
 
         result = p.check_chksum()
 

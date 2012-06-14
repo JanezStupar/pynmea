@@ -775,6 +775,16 @@ class R00(NMEASentence):
         for index, item in enumerate(self.parts[1:]):
             setattr(self, self.parse_map[index][1], item)
 
+    @property
+    def nmea_sentence(self):
+        """
+        Dump the object data into a NMEA sentence
+
+        This one is over ridden since this sentence has overriden parse method
+        """
+        parts = [self.parts[0]] + self.parts[1]
+        tmp=(',').join(parts)
+        return '$' + tmp + '*' + checksum_calc(tmp)
 
 class RMA(NMEASentence):
     def __init__(self,**kwargs):
@@ -866,6 +876,16 @@ class RTE(NMEASentence):
         for index, item in enumerate(self.parts[1:]):
             setattr(self, self.parse_map[index][1], item)
 
+    @property
+    def nmea_sentence(self):
+        """
+        Dump the object data into a NMEA sentence
+
+        This one is over ridden since this sentence has overriden parse method
+        """
+        parts = self.parts[0:5] + self.parts[5]
+        tmp=(',').join(parts)
+        return '$' + tmp + '*' + checksum_calc(tmp)
 
 class STN(NMEASentence):
     """ NOTE: No real data could be found for examples of the actual spec so
@@ -873,7 +893,7 @@ class STN(NMEASentence):
     """
     def __init__(self,**kwargs):
         parse_map = (
-            ("Talker ID Number", "talker_id"),) # 00 - 99
+            ("Talker ID Number", "talker_id_num"),) # 00 - 99
             #("Checksum", "checksum"))
 
 
