@@ -21,8 +21,9 @@ class TestNMEAParse(unittest.TestCase):
                      ("Direction", "lon_dir"))
 
         p = NMEASentence(parse_map)
-        p._parse("$GLL,3751.65,S,14507.36,E*77")
+        p._parse("$GPGLL,3751.65,S,14507.36,E*77")
 
+        self.assertEquals("GP", p.talker_id)
         self.assertEquals("GLL", p.sen_type)
         self.assertEquals(p.parts,
                           ['GLL', '3751.65', 'S', '14507.36', 'E'])
@@ -34,8 +35,9 @@ class TestNMEAParse(unittest.TestCase):
                      ("Direction", "lon_dir"))
 
         p = NMEASentence(parse_map)
-        p.parse("$GLL,3751.65,S,14507.36,E*77")
+        p.parse("$GPGLL,3751.65,S,14507.36,E*77")
 
+        self.assertEquals("GP", p.talker_id)
         self.assertEquals("GLL", p.sen_type)
         self.assertEquals(p.parts,
                           ['GLL', '3751.65', 'S', '14507.36', 'E'])
@@ -47,7 +49,7 @@ class TestNMEAParse(unittest.TestCase):
 
     def test_checksum_passes(self):
         parse_map = ('Checksum', 'checksum')
-        nmea_str = "$GLL,3751.65,S,14507.36,E*77"
+        nmea_str = "$GPGLL,3751.65,S,14507.36,E*77"
         p = NMEASentence(parse_map)
         p.checksum = '77'
         p.nmea_sentence = nmea_str
@@ -57,7 +59,7 @@ class TestNMEAParse(unittest.TestCase):
 
     def test_checksum_fails_wrong_checksum(self):
         parse_map = ('Checksum', 'checksum')
-        nmea_str = "$GLL,3751.65,S,14507.36,E*78"
+        nmea_str = "$GPGLL,3751.65,S,14507.36,E*78"
         p = NMEASentence(parse_map)
         p.checksum = '78'
         p.nmea_sentence = nmea_str
@@ -67,7 +69,7 @@ class TestNMEAParse(unittest.TestCase):
 
     def test_checksum_fails_wrong_str(self):
         parse_map = ('Checksum', 'checksum')
-        nmea_str = "$GLL,3751.65,S,14507.36,W*77"
+        nmea_str = "$GPGLL,3751.65,S,14507.36,W*77"
         p = NMEASentence(parse_map)
         p.checksum = '77'
         p.nmea_sentence = nmea_str
@@ -85,8 +87,9 @@ class TestAAM(unittest.TestCase):
 
     def test_parses_map(self):
         p = AAM()
-        p.parse("$AAM,A,A,0.10,N,WPTNME*32")
+        p.parse("$GPAAM,A,A,0.10,N,WPTNME*32")
 
+        self.assertEquals("GP", p.talker_id)
         self.assertEquals("AAM", p.sen_type)
         self.assertEquals("A", p.arrival_circ_entered)
         self.assertEquals("A", p.perp_passed)
@@ -105,8 +108,9 @@ class TestALM(unittest.TestCase):
 
     def test_parses_map(self):
         p = ALM()
-        p.parse("$ALM,32,1,01,5,00,264A,4E,0A5E,FD3F,A11257,B8E036,536C67,2532C1,069,000*7B")
+        p.parse("$GPALM,32,1,01,5,00,264A,4E,0A5E,FD3F,A11257,B8E036,536C67,2532C1,069,000*7B")
 
+        self.assertEquals("GP", p.talker_id)
         self.assertEquals("ALM", p.sen_type)
         self.assertEquals("32", p.total_num_msgs)
         self.assertEquals("1", p.msg_num)
@@ -135,8 +139,9 @@ class TestAPA(unittest.TestCase):
 
     def test_parses_map(self):
         p = APA()
-        p.parse("$APA,A,A,0.10,R,N,V,V,011,M,DEST*82")
+        p.parse("$GPAPA,A,A,0.10,R,N,V,V,011,M,DEST*82")
 
+        self.assertEquals("GP", p.talker_id)
         self.assertEquals("APA", p.sen_type)
         self.assertEquals("A", p.status_gen)
         self.assertEquals("A", p.status_cycle_lock)
@@ -160,8 +165,9 @@ class TestAPB(unittest.TestCase):
 
     def test_parses_map(self):
         p = APB()
-        p.parse("$APB,A,A,0.10,R,N,V,V,011,M,DEST,011,M,011,M*82")
+        p.parse("$GPAPB,A,A,0.10,R,N,V,V,011,M,DEST,011,M,011,M*82")
 
+        self.assertEquals("GP", p.talker_id)
         self.assertEquals("APB", p.sen_type)
         self.assertEquals("A", p.status_gen)
         self.assertEquals("A", p.status_cycle_lock)
@@ -191,8 +197,9 @@ class TestBEC(unittest.TestCase):
         """ No FAA mode indicator
         """
         p = BEC()
-        p.parse("$BEC,081837,,,,,,T,,M,,N,*13")
+        p.parse("$GPBEC,081837,,,,,,T,,M,,N,*13")
 
+        self.assertEquals("GP", p.talker_id)
         self.assertEquals("BEC", p.sen_type)
         self.assertEquals("081837", p.timestamp)
         self.assertEquals("", p.waypoint_lat)
@@ -214,6 +221,7 @@ class TestBEC(unittest.TestCase):
         p = BEC()
         p.parse("BEC,220516,5130.02,N,00046.34,W,213.8,T,218.0,M,0004.6,N,EGLM*11")
 
+        self.assertEquals("GP", p.talker_id)
         self.assertEquals("BEC", p.sen_type)
         self.assertEquals("220516", p.timestamp)
         self.assertEquals("5130.02", p.waypoint_lat)
@@ -235,6 +243,7 @@ class TestBEC(unittest.TestCase):
         p = BEC()
         p.parse("BEC,220516,5130.02,N,00046.34,W,213.8,T,218.0,M,0004.6,N,EGLM,X*11")
 
+        self.assertEquals("GP", p.talker_id)
         self.assertEquals("BEC", p.sen_type)
         self.assertEquals("220516", p.timestamp)
         self.assertEquals("5130.02", p.waypoint_lat)
@@ -261,8 +270,9 @@ class TestBOD(unittest.TestCase):
 
     def test_parses_map(self):
         p = BOD()
-        p.parse("$BOD,045.,T,023.,M,DEST,START")
+        p.parse("$GPBOD,045.,T,023.,M,DEST,START")
 
+        self.assertEquals("GP", p.talker_id)
         self.assertEquals("BOD", p.sen_type)
         self.assertEquals(p.parts,
                           ['BOD', '045.', 'T', '023.', 'M', 'DEST', 'START'])
@@ -275,7 +285,7 @@ class TestBOD(unittest.TestCase):
 
     def test_gets_properties(self):
         p = BOD()
-        p.parse("$BOD,045.,T,023.,M,DEST,START")
+        p.parse("$GPBOD,045.,T,023.,M,DEST,START")
 
         self.assertEquals(p.bearing_true, '045.,T')
         self.assertEquals(p.bearing_magnetic, '023.,M')
@@ -292,8 +302,9 @@ class TestBWC(unittest.TestCase):
 
     def test_parses_map(self):
         p = BWC()
-        p.parse("$BWC,220516,5130.02,N,00046.34,W,213.8,T,218.0,M,0004.6,N,EGLM*21")
+        p.parse("$GPBWC,220516,5130.02,N,00046.34,W,213.8,T,218.0,M,0004.6,N,EGLM*21")
 
+        self.assertEquals("GP", p.talker_id)
         self.assertEquals("BWC", p.sen_type)
         self.assertEquals("220516", p.timestamp)
         self.assertEquals("5130.02", p.lat_next)
@@ -311,7 +322,7 @@ class TestBWC(unittest.TestCase):
 
     def test_checksum_passes(self):
         p = BWC()
-        p.parse("$BWC,220516,5130.02,N,00046.34,W,213.8,T,218.0,M,0004.6,N,EGLM*21")
+        p.parse("$GPBWC,220516,5130.02,N,00046.34,W,213.8,T,218.0,M,0004.6,N,EGLM*21")
 
         result = p.check_chksum()
         self.assertTrue(result)
@@ -326,7 +337,8 @@ class TestBWR(unittest.TestCase):
 
     def test_parses_map(self):
         p = BWR()
-        p.parse("$BWR,161102,4217.4920,N,07055.7950,W,296.9,T,311.9,M,47.664,N,0001*3E")
+        p.parse("$GPBWR,161102,4217.4920,N,07055.7950,W,296.9,T,311.9,M,47.664,N,0001*3E")
+        self.assertEquals("GP", p.talker_id)
         self.assertEquals("BWR", p.sen_type)
         self.assertEquals("161102", p.timestamp)
         self.assertEquals("4217.4920", p.lat_next)
@@ -352,8 +364,9 @@ class TestBWW(unittest.TestCase):
 
     def test_parses_map(self):
         p = BWW()
-        p.parse("$BWW,x.x,T,x.x,M,c--c,c--c*ff")
+        p.parse("$GPBWW,x.x,T,x.x,M,c--c,c--c*ff")
 
+        self.assertEquals("GP", p.talker_id)
         self.assertEquals("BWW", p.sen_type)
         self.assertEquals("x.x", p.bearing_deg_true)
         self.assertEquals("T", p.bearing_deg_true_sym)
@@ -373,8 +386,9 @@ class TestGGA(unittest.TestCase):
 
     def test_parses_map(self):
         p = GGA()
-        p.parse("$GGA,123519,4807.038,N,01131.000,E,1,08,0.9,545.4,M,46.9,M,,*47")
+        p.parse("$GPGGA,123519,4807.038,N,01131.000,E,1,08,0.9,545.4,M,46.9,M,,*47")
 
+        self.assertEquals("GP", p.talker_id)
         self.assertEquals("GGA", p.sen_type)
         self.assertEquals("123519", p.timestamp)
         self.assertEquals("4807.038", p.latitude)
@@ -402,8 +416,9 @@ class TestGLL(unittest.TestCase):
 
     def test_parses_map1(self):
         p = GLL()
-        p.parse("$GLL,3751.65,S,14507.36,E*77")
+        p.parse("$GPGLL,3751.65,S,14507.36,E*77")
 
+        self.assertEquals("GP", p.talker_id)
         self.assertEquals("GLL", p.sen_type)
         self.assertEquals("3751.65", p.lat)
         self.assertEquals("S", p.lat_dir)
@@ -414,8 +429,9 @@ class TestGLL(unittest.TestCase):
 
     def test_parses_map2(self):
         p = GLL()
-        p.parse("$GLL,4916.45,N,12311.12,W,225444,A")
+        p.parse("$GPGLL,4916.45,N,12311.12,W,225444,A")
 
+        self.assertEquals("GP", p.talker_id)
         self.assertEquals("GLL", p.sen_type)
         self.assertEquals("4916.45", p.lat)
         self.assertEquals("N", p.lat_dir)
@@ -426,7 +442,7 @@ class TestGLL(unittest.TestCase):
 
     #def test_checksum_passes1(self):
         #p = GLL()
-        #p.nmea_sentence = "$GLL,4916.45,N,12311.12,W,225444,A"
+        #p.nmea_sentence = "$GPGLL,4916.45,N,12311.12,W,225444,A"
         #p.data_validity = 'A'
         ##p._use_data_validity = True
 
@@ -435,7 +451,7 @@ class TestGLL(unittest.TestCase):
 
     #def test_checksum_fails1(self):
         #p = GLL()
-        #p.nmea_sentence = "$GLL,4916.45,N,12311.12,W,225444,B"
+        #p.nmea_sentence = "$GPGLL,4916.45,N,12311.12,W,225444,B"
         #p.checksum = 'B'
         #p._use_data_validity = True
 
@@ -444,7 +460,7 @@ class TestGLL(unittest.TestCase):
 
     def test_checksum_passes2(self):
         p = GLL()
-        p.nmea_sentence = "$GLL,3751.65,S,14507.36,E*77"
+        p.nmea_sentence = "$GPGLL,3751.65,S,14507.36,E*77"
         p.checksum = '77'
 
         result = p.check_chksum()
@@ -452,7 +468,7 @@ class TestGLL(unittest.TestCase):
 
     def test_checksum_fails2(self):
         p = GLL()
-        p.nmea_sentence = "$GLL,3751.65,S,14507.36,E*78"
+        p.nmea_sentence = "$GPGLL,3751.65,S,14507.36,E*78"
         p.checksum = '78'
 
         result = p.check_chksum()
@@ -460,7 +476,7 @@ class TestGLL(unittest.TestCase):
 
     def test_gets_properties(self):
         p = GLL()
-        p.parse("$GLL,3751.65,S,14507.36,E*77")
+        p.parse("$GPGLL,3751.65,S,14507.36,E*77")
 
         self.assertEquals(p.latitude, float('3751.65'))
         self.assertEquals(p.longitude, float('14507.36'))
@@ -477,8 +493,9 @@ class TestGSA(unittest.TestCase):
 
     def test_parses_map(self):
         p = GSA()
-        p.parse("$GSA,A,3,04,05,,09,12,,,24,,,,,2.5,1.3,2.1*39")
+        p.parse("$GPGSA,A,3,04,05,,09,12,,,24,,,,,2.5,1.3,2.1*39")
 
+        self.assertEquals("GP", p.talker_id)
         self.assertEquals("GSA", p.sen_type)
         self.assertEquals("A", p.mode)
         self.assertEquals("3", p.mode_fix_type)
@@ -502,7 +519,7 @@ class TestGSA(unittest.TestCase):
     def test_checksum_passes(self):
         p = GSA()
         p.checksum = '39'
-        p.nmea_sentence = "$GSA,A,3,04,05,,09,12,,,24,,,,,2.5,1.3,2.1*39"
+        p.nmea_sentence = "$GPGSA,A,3,04,05,,09,12,,,24,,,,,2.5,1.3,2.1*39"
 
         result = p.check_chksum()
 
@@ -511,7 +528,7 @@ class TestGSA(unittest.TestCase):
     def test_checksum_fails(self):
         p = GSA()
         p.checksum = '38'
-        p.nmea_sentence = "$GSA,A,3,04,05,,09,12,,,24,,,,,2.5,1.3,2.1*38"
+        p.nmea_sentence = "$GPGSA,A,3,04,05,,09,12,,,24,,,,,2.5,1.3,2.1*38"
 
         result = p.check_chksum()
 
@@ -527,8 +544,9 @@ class TestGSV(unittest.TestCase):
 
     def test_parses_map(self):
         p = GSV()
-        p.parse("$GSV,3,1,11,03,03,111,00,04,15,270,00,06,01,010,00,13,06,292,00*74")
+        p.parse("$GPGSV,3,1,11,03,03,111,00,04,15,270,00,06,01,010,00,13,06,292,00*74")
 
+        self.assertEquals("GP", p.talker_id)
         self.assertEquals("GSV", p.sen_type)
         self.assertEquals('3', p.num_messages)
         self.assertEquals('1', p.msg_num)
@@ -554,7 +572,7 @@ class TestGSV(unittest.TestCase):
     def test_checksum_passes(self):
         p = GSV()
         p.checksum = '74'
-        p.nmea_sentence = "$GSV,3,1,11,03,03,111,00,04,15,270,00,06,01,010,00,13,06,292,00*74"
+        p.nmea_sentence = "$GPGSV,3,1,11,03,03,111,00,04,15,270,00,06,01,010,00,13,06,292,00*74"
 
         result = p.check_chksum()
 
@@ -563,7 +581,7 @@ class TestGSV(unittest.TestCase):
     def test_checksum_fails(self):
         p = GSV()
         p.checksum = '73'
-        p.nmea_sentence = "$GSV,3,1,11,03,03,111,00,04,15,270,00,06,01,010,00,13,06,292,00*74"
+        p.nmea_sentence = "$GPGSV,3,1,11,03,03,111,00,04,15,270,00,06,01,010,00,13,06,292,00*74"
 
         result = p.check_chksum()
 
@@ -579,8 +597,9 @@ class TestHDG(unittest.TestCase):
 
     def test_parses_map(self):
         p = HDG()
-        p.parse("$HDG,190.7,,E,0.0,E*7F")
+        p.parse("$GPHDG,190.7,,E,0.0,E*7F")
 
+        self.assertEquals("GP", p.talker_id)
         self.assertEquals("HDG", p.sen_type)
         self.assertEquals("190.7", p.heading)
         self.assertEquals("", p.deviation)
@@ -592,7 +611,7 @@ class TestHDG(unittest.TestCase):
     def test_checksum_passes(self):
         p = HDG()
         p.checksum = '7F'
-        p.nmea_sentence = "$HDG,190.7,,E,0.0,E*7F"
+        p.nmea_sentence = "$GPHDG,190.7,,E,0.0,E*7F"
 
         result = p.check_chksum()
 
@@ -601,7 +620,7 @@ class TestHDG(unittest.TestCase):
     def test_checksum_fails(self):
         p = HDG()
         p.checksum = '7E'
-        p.nmea_sentence = "$HDG,190.7,,E,0.0,E*7E"
+        p.nmea_sentence = "$GPHDG,190.7,,E,0.0,E*7E"
 
         result = p.check_chksum()
 
@@ -617,8 +636,9 @@ class TestHDT(unittest.TestCase):
 
     def test_parses_map(self):
         p = HDT()
-        p.parse("$HDT,227.66,T*02")
+        p.parse("$GPHDT,227.66,T*02")
 
+        self.assertEquals("GP", p.talker_id)
         self.assertEquals("HDT", p.sen_type)
         self.assertEquals("227.66", p.heading)
         self.assertEquals("T", p.hdg_true)
@@ -627,7 +647,7 @@ class TestHDT(unittest.TestCase):
     def test_checksum_passes(self):
         p = HDT()
         p.checksum = '02'
-        p.nmea_sentence = '$HDT,227.66,T*02'
+        p.nmea_sentence = '$GPHDT,227.66,T*02'
 
         result = p.check_chksum()
 
@@ -636,7 +656,7 @@ class TestHDT(unittest.TestCase):
     def test_checksum_fails(self):
         p = HDT()
         p.checksum = '03'
-        p.nmea_sentence = '$HDT,227.66,T*03'
+        p.nmea_sentence = '$GPHDT,227.66,T*03'
 
         result = p.check_chksum()
 
@@ -654,7 +674,8 @@ class TestGPR00(unittest.TestCase):
         p = R00()
         p.parse("$GPR00,EGLL,EGLM,EGTB,EGUB,EGTK,MBOT,EGTB,,,,,,,*58")
 
-        self.assertEquals("GPR00", p.sen_type)
+        self.assertEquals("GP", p.talker_id)
+        self.assertEquals("R00", p.sen_type)
         self.assertEquals(['EGLL', 'EGLM', 'EGTB', 'EGUB', 'EGTK', 'MBOT',
                            'EGTB', '', '', '', '', '', '', ''],
                           p.waypoint_list)
@@ -664,7 +685,8 @@ class TestGPR00(unittest.TestCase):
         p = R00()
         p.parse("$GPR00,MINST,CHATN,CHAT1,CHATW,CHATM,CHATE,003,004,005,006,007,,,*05")
 
-        self.assertEquals("GPR00", p.sen_type)
+        self.assertEquals("GP", p.talker_id)
+        self.assertEquals("R00", p.sen_type)
         self.assertEquals(['MINST', 'CHATN', 'CHAT1', 'CHATW', 'CHATM', 'CHATE',
                            '003', '004', '005', '006', '007', '', '', ''],
                           p.waypoint_list)
@@ -698,8 +720,9 @@ class TestRMA(unittest.TestCase):
 
     def test_parses_map(self):
         p = RMA()
-        p.parse("$RMA,A,4630.129,N,147.372,W,,,12.2,5,7,N*51")
+        p.parse("$GPRMA,A,4630.129,N,147.372,W,,,12.2,5,7,N*51")
 
+        self.assertEquals("GP", p.talker_id)
         self.assertEquals("RMA", p.sen_type)
         self.assertEquals("A", p.data_status)
         self.assertEquals("4630.129", p.lat)
@@ -717,14 +740,14 @@ class TestRMA(unittest.TestCase):
     def test_checksum_passes(self):
         p = RMA()
         p.checksum = '51'
-        p.nmea_sentence = '$RMA,A,4630.129,N,147.372,W,,,12.2,5,7,N*51'
+        p.nmea_sentence = '$GPRMA,A,4630.129,N,147.372,W,,,12.2,5,7,N*51'
         result = p.check_chksum()
         self.assertTrue(result)
 
     def test_checksum_fails(self):
         p = RMA()
         p.checksum = '52'
-        p.nmea_sentence = '$RMA,A,4630.129,N,147.372,W,,,12.2,5,7,N*52'
+        p.nmea_sentence = '$GPRMA,A,4630.129,N,147.372,W,,,12.2,5,7,N*52'
         result = p.check_chksum()
         self.assertFalse(result)
 
@@ -738,8 +761,9 @@ class TestRMB(unittest.TestCase):
 
     def test_parses_map_1(self):
         p = RMB()
-        p.parse("$RMB,A,0.66,L,003,004,4917.24,N,12309.57,W,001.3,052.5,000.5,V*20")
+        p.parse("$GPRMB,A,0.66,L,003,004,4917.24,N,12309.57,W,001.3,052.5,000.5,V*20")
 
+        self.assertEquals("GP", p.talker_id)
         self.assertEquals("RMB", p.sen_type)
         self.assertEquals("A", p.validity)
         self.assertEquals("0.66", p.cross_track_error)
@@ -758,8 +782,9 @@ class TestRMB(unittest.TestCase):
 
     def test_parses_map_2(self):
         p = RMB()
-        p.parse("$RMB,A,4.08,L,EGLL,EGLM,5130.02,N,00046.34,W,004.6,213.9,122.9,A*3D")
+        p.parse("$GPRMB,A,4.08,L,EGLL,EGLM,5130.02,N,00046.34,W,004.6,213.9,122.9,A*3D")
 
+        self.assertEquals("GP", p.talker_id)
         self.assertEquals("RMB", p.sen_type)
         self.assertEquals("A", p.validity)
         self.assertEquals("4.08", p.cross_track_error)
@@ -778,8 +803,9 @@ class TestRMB(unittest.TestCase):
 
     def test_parses_map_3(self):
         p = RMB()
-        p.parse("$RMB,A,x.x,a,c--c,d--d,llll.ll,e,yyyyy.yy,f,g.g,h.h,i.i,j*kk")
+        p.parse("$GPRMB,A,x.x,a,c--c,d--d,llll.ll,e,yyyyy.yy,f,g.g,h.h,i.i,j*kk")
 
+        self.assertEquals("GP", p.talker_id)
         self.assertEquals("RMB", p.sen_type)
         self.assertEquals("A", p.validity)
         self.assertEquals("x.x", p.cross_track_error)
@@ -804,14 +830,14 @@ class TestRMB(unittest.TestCase):
     def test_checksum_passes(self):
         p = RMB()
         p.checksum = '20'
-        p.nmea_sentence = '$RMB,A,0.66,L,003,004,4917.24,N,12309.57,W,001.3,052.5,000.5,V*20'
+        p.nmea_sentence = '$GPRMB,A,0.66,L,003,004,4917.24,N,12309.57,W,001.3,052.5,000.5,V*20'
         result = p.check_chksum()
         self.assertTrue(result)
 
     def test_checksum_fails(self):
         p = RMB()
         p.checksum = '21'
-        p.nmea_sentence = '$RMB,A,0.66,L,003,004,4917.24,N,12309.57,W,001.3,052.5,000.5,V*21'
+        p.nmea_sentence = '$GPRMB,A,0.66,L,003,004,4917.24,N,12309.57,W,001.3,052.5,000.5,V*21'
         result = p.check_chksum()
         self.assertFalse(result)
 
@@ -825,8 +851,9 @@ class TestRMC(unittest.TestCase):
 
     def test_parses_map_1(self):
         p = RMC()
-        p.parse("$RMC,081836,A,3751.65,S,14507.36,E,000.0,360.0,130998,011.3,E*62")
+        p.parse("$GPRMC,081836,A,3751.65,S,14507.36,E,000.0,360.0,130998,011.3,E*62")
 
+        self.assertEquals("GP", p.talker_id)
         self.assertEquals("RMC", p.sen_type)
         self.assertEquals("081836", p.timestamp)
         self.assertEquals("A", p.data_validity)
@@ -843,8 +870,9 @@ class TestRMC(unittest.TestCase):
 
     def test_parses_map_2(self):
         p = RMC()
-        p.parse("$RMC,225446,A,4916.45,N,12311.12,W,000.5,054.7,191194,020.3,E*68")
+        p.parse("$GPRMC,225446,A,4916.45,N,12311.12,W,000.5,054.7,191194,020.3,E*68")
 
+        self.assertEquals("GP", p.talker_id)
         self.assertEquals("RMC", p.sen_type)
         self.assertEquals("225446", p.timestamp)
         self.assertEquals("A", p.data_validity)
@@ -861,8 +889,9 @@ class TestRMC(unittest.TestCase):
 
     def test_parses_map_3(self):
         p = RMC()
-        p.parse("$RMC,220516,A,5133.82,N,00042.24,W,173.8,231.8,130694,004.2,W*70")
+        p.parse("$GPRMC,220516,A,5133.82,N,00042.24,W,173.8,231.8,130694,004.2,W*70")
 
+        self.assertEquals("GP", p.talker_id)
         self.assertEquals("RMC", p.sen_type)
         self.assertEquals("220516", p.timestamp)
         self.assertEquals("A", p.data_validity)
@@ -880,14 +909,14 @@ class TestRMC(unittest.TestCase):
     def test_checksum_passes(self):
         p = RMC()
         p.checksum = '70'
-        p.nmea_sentence = '$RMC,220516,A,5133.82,N,00042.24,W,173.8,231.8,130694,004.2,W*70'
+        p.nmea_sentence = '$GPRMC,220516,A,5133.82,N,00042.24,W,173.8,231.8,130694,004.2,W*70'
         result = p.check_chksum()
         self.assertTrue(result)
 
     def test_checksum_fails(self):
         p = RMC()
         p.checksum = '71'
-        p.nmea_sentence = '$RMC,220516,A,5133.82,N,00042.24,W,173.8,231.8,130694,004.2,W*71'
+        p.nmea_sentence = '$GPRMC,220516,A,5133.82,N,00042.24,W,173.8,231.8,130694,004.2,W*71'
         result = p.check_chksum()
         self.assertFalse(result)
 
@@ -901,8 +930,9 @@ class TestRTE(unittest.TestCase):
 
     def test_parses_map1(self):
         p = RTE()
-        p.parse("$RTE,2,1,c,0,PBRCPK,PBRTO,PTELGR,PPLAND,PYAMBU,PPFAIR,PWARRN,PMORTL,PLISMR*73")
+        p.parse("$GPRTE,2,1,c,0,PBRCPK,PBRTO,PTELGR,PPLAND,PYAMBU,PPFAIR,PWARRN,PMORTL,PLISMR*73")
 
+        self.assertEquals("GP", p.talker_id)
         self.assertEquals("RTE", p.sen_type)
         self.assertEquals("2", p.num_in_seq)
         self.assertEquals("1", p.sen_num)
@@ -915,7 +945,8 @@ class TestRTE(unittest.TestCase):
 
     def test_parses_map2(self):
         p = RTE()
-        p.parse("$RTE,2,2,c,0,PCRESY,GRYRIE,GCORIO,GWERR,GWESTG,7FED*34")
+        p.parse("$GPRTE,2,2,c,0,PCRESY,GRYRIE,GCORIO,GWERR,GWESTG,7FED*34")
+        self.assertEquals("GP", p.talker_id)
         self.assertEquals("RTE", p.sen_type)
         self.assertEquals("2", p.num_in_seq)
         self.assertEquals("2", p.sen_num)
@@ -929,7 +960,7 @@ class TestRTE(unittest.TestCase):
     def test_checksum_passes(self):
         p = RTE()
         p.checksum = "73"
-        p.nmea_sentence = "$RTE,2,1,c,0,PBRCPK,PBRTO,PTELGR,PPLAND,PYAMBU,PPFAIR,PWARRN,PMORTL,PLISMR*73"
+        p.nmea_sentence = "$GPRTE,2,1,c,0,PBRCPK,PBRTO,PTELGR,PPLAND,PYAMBU,PPFAIR,PWARRN,PMORTL,PLISMR*73"
 
         result = p.check_chksum()
         self.assertTrue(result)
@@ -937,7 +968,7 @@ class TestRTE(unittest.TestCase):
     def test_checksum_fails(self):
         p = RTE()
         p.checksum = "74"
-        p.nmea_sentence = "$RTE,2,1,c,0,PBRCPK,PBRTO,PTELGR,PPLAND,PYAMBU,PPFAIR,PWARRN,PMORTL,PLISMR*74"
+        p.nmea_sentence = "$GPRTE,2,1,c,0,PBRCPK,PBRTO,PTELGR,PPLAND,PYAMBU,PPFAIR,PWARRN,PMORTL,PLISMR*74"
 
         result = p.check_chksum()
         self.assertFalse(result)
@@ -952,15 +983,17 @@ class TestSTN(unittest.TestCase):
 
     def test_parses_map1(self):
         p = STN()
-        p.parse("$STN,10")
+        p.parse("$GPSTN,10")
 
+        self.assertEquals("GP", p.talker_id)
         self.assertEquals("STN", p.sen_type)
         self.assertEquals("10", p.talker_id)
 
     def test_parses_map2(self):
         p = STN()
-        p.parse("$STN,10*73")
+        p.parse("$GPSTN,10*73")
 
+        self.assertEquals("GP", p.talker_id)
         self.assertEquals("STN", p.sen_type)
         self.assertEquals("10", p.talker_id)
         self.assertEquals("73", p.checksum)
@@ -975,8 +1008,9 @@ class TestTRF(unittest.TestCase):
 
     def test_parses_map(self):
         p = TRF()
-        p.parse("$TRF,121314.15,020112,123.321,N,0987.232,W,2.3,4.5,6.7,8.9,ABC")
+        p.parse("$GPTRF,121314.15,020112,123.321,N,0987.232,W,2.3,4.5,6.7,8.9,ABC")
 
+        self.assertEquals("GP", p.talker_id)
         self.assertEquals("TRF", p.sen_type)
         self.assertEquals("121314.15", p.timestamp)
         self.assertEquals("020112", p.date)
@@ -1000,8 +1034,9 @@ class TestVBW(unittest.TestCase):
 
     def test_parses_map(self):
         p = VBW()
-        p.parse("$VBW,10.1,-0.2,A,9.8,-0.5,A*62")
+        p.parse("$GPVBW,10.1,-0.2,A,9.8,-0.5,A*62")
 
+        self.assertEquals("GP", p.talker_id)
         self.assertEquals("VBW", p.sen_type)
         self.assertEquals("10.1", p.lon_water_spd)
         self.assertEquals("-0.2", p.trans_water_spd)
@@ -1020,8 +1055,9 @@ class TestVTG(unittest.TestCase):
 
     def test_parses_map_1(self):
         p = VTG()
-        p.parse("$VTG,360.0,T,348.7,M,000.0,N,000.0,K*43")
+        p.parse("$GPVTG,360.0,T,348.7,M,000.0,N,000.0,K*43")
 
+        self.assertEquals("GP", p.talker_id)
         self.assertEquals("VTG", p.sen_type)
         self.assertEquals("360.0", p.true_track)
         self.assertEquals("T", p.true_track_sym)
@@ -1035,8 +1071,9 @@ class TestVTG(unittest.TestCase):
 
     def test_parses_map_2(self):
         p = VTG()
-        p.parse("VTG,054.7,T,034.4,M,005.5,N,010.2,K")
+        p.parse("GPVTG,054.7,T,034.4,M,005.5,N,010.2,K")
 
+        self.assertEquals("GP", p.talker_id)
         self.assertEquals("VTG", p.sen_type)
         self.assertEquals("054.7", p.true_track)
         self.assertEquals("T", p.true_track_sym)
@@ -1050,8 +1087,9 @@ class TestVTG(unittest.TestCase):
 
     def test_parses_map3(self):
         p = VTG()
-        p.parse("$VTG,t,T,,,s.ss,N,s.ss,K*hh")
+        p.parse("$GPVTG,t,T,,,s.ss,N,s.ss,K*hh")
 
+        self.assertEquals("GP", p.talker_id)
         self.assertEquals("VTG", p.sen_type)
         self.assertEquals("t", p.true_track)
         self.assertEquals("T", p.true_track_sym)
@@ -1079,8 +1117,9 @@ class TestZDA(unittest.TestCase):
 
     def test_parses_map(self):
         p = ZDA()
-        p.parse("$ZDA,025959.000,01,01,1970,,*5B")
+        p.parse("$GPZDA,025959.000,01,01,1970,,*5B")
 
+        self.assertEquals("GP", p.talker_id)
         self.assertEquals("ZDA", p.sen_type)
         self.assertEquals("025959.000", p.timestamp)
         self.assertEquals("01", p.day)
@@ -1093,7 +1132,7 @@ class TestZDA(unittest.TestCase):
     def test_checksum_passes(self):
         p = ZDA()
         p.checksum = '5B'
-        p.nmea_sentence = '$ZDA,025959.000,01,01,1970,,*5B'
+        p.nmea_sentence = '$GPZDA,025959.000,01,01,1970,,*5B'
 
         result = p.check_chksum()
 
@@ -1102,7 +1141,7 @@ class TestZDA(unittest.TestCase):
     def test_checksum_fails(self):
         p = ZDA()
         p.checksum = 'b5'
-        p.nmea_sentence = '$ZDA,025959.000,01,01,1970,,*b5'
+        p.nmea_sentence = '$GPZDA,025959.000,01,01,1970,,*b5'
 
         result = p.check_chksum()
 
@@ -1118,8 +1157,9 @@ class TestWCV(unittest.TestCase):
 
     def test_parses_map(self):
         p = WCV()
-        p.parse("$WCV,2.3,N,ABCD*1C")
+        p.parse("$GPWCV,2.3,N,ABCD*1C")
 
+        self.assertEquals("GP", p.talker_id)
         self.assertEquals("WCV", p.sen_type)
         self.assertEquals("2.3", p.velocity)
         self.assertEquals("N", p.vel_units)
@@ -1128,7 +1168,7 @@ class TestWCV(unittest.TestCase):
     def test_checksum_passes(self):
         p = WCV()
         p.checksum = '1C'
-        p.nmea_sentence = '$WCV,2.3,N,ABCD*1C'
+        p.nmea_sentence = '$GPWCV,2.3,N,ABCD*1C'
 
         result = p.check_chksum()
 
@@ -1137,7 +1177,7 @@ class TestWCV(unittest.TestCase):
     def test_checksum_fails(self):
         p = WCV()
         p.checksum = '1B'
-        p.nmea_sentence = '$WCV,2.3,N,ABCD*1B'
+        p.nmea_sentence = '$GPWCV,2.3,N,ABCD*1B'
 
         result = p.check_chksum()
 
@@ -1153,8 +1193,9 @@ class TestWNC(unittest.TestCase):
 
     def test_parses_map(self):
         p = WNC()
-        p.parse("$WNC,1.1,N,2.2,K,c--c,c--c*ff")
+        p.parse("$GPWNC,1.1,N,2.2,K,c--c,c--c*ff")
 
+        self.assertEquals("GP", p.talker_id)
         self.assertEquals("WNC", p.sen_type)
         self.assertEquals("1.1", p.dist_nautical_miles)
         self.assertEquals("N", p.dist_naut_unit)
@@ -1174,8 +1215,9 @@ class TestWPL(unittest.TestCase):
 
     def test_parses_map_1(self):
         p = WPL()
-        p.parse("$WPL,4917.16,N,12310.64,W,003*65")
+        p.parse("$GPWPL,4917.16,N,12310.64,W,003*65")
 
+        self.assertEquals("GP", p.talker_id)
         self.assertEquals("WPL", p.sen_type)
         self.assertEquals("4917.16", p.lat)
         self.assertEquals("N", p.lat_dir)
@@ -1186,8 +1228,9 @@ class TestWPL(unittest.TestCase):
 
     def test_parses_map_2(self):
         p = WPL()
-        p.parse("$WPL,5128.62,N,00027.58,W,EGLL*59")
+        p.parse("$GPWPL,5128.62,N,00027.58,W,EGLL*59")
 
+        self.assertEquals("GP", p.talker_id)
         self.assertEquals("WPL", p.sen_type)
         self.assertEquals("5128.62", p.lat)
         self.assertEquals("N", p.lat_dir)
@@ -1206,8 +1249,9 @@ class TestXTE(unittest.TestCase):
 
     def test_parses_map_1(self):
         p = XTE()
-        p.parse("$XTE,A,A,0.67,L,N")
+        p.parse("$GPXTE,A,A,0.67,L,N")
 
+        self.assertEquals("GP", p.talker_id)
         self.assertEquals("XTE", p.sen_type)
         self.assertEquals("A", p.warning_flag)
         self.assertEquals("A", p.lock_flag)
@@ -1217,8 +1261,9 @@ class TestXTE(unittest.TestCase):
 
     def test_parses_map_2(self):
         p = XTE()
-        p.parse("$XTE,A,A,4.07,L,N*6D")
+        p.parse("$GPXTE,A,A,4.07,L,N*6D")
 
+        self.assertEquals("GP", p.talker_id)
         self.assertEquals("XTE", p.sen_type)
         self.assertEquals("A", p.warning_flag)
         self.assertEquals("A", p.lock_flag)
@@ -1231,8 +1276,9 @@ class TestXTE(unittest.TestCase):
 class TestRME(unittest.TestCase):
     def test_parses_map(self):
         p = RME()
-        p.parse("$RME,3.1,M,4.2,M,5.2,M*2D")
+        p.parse("$GPRME,3.1,M,4.2,M,5.2,M*2D")
 
+        self.assertEquals("GP", p.talker_id)
         self.assertEqual("RME", p.sen_type)
         self.assertEqual("3.1", p.hpe)
         self.assertEqual("M", p.hpe_unit)
@@ -1245,8 +1291,9 @@ class TestRME(unittest.TestCase):
 class TestRMM(unittest.TestCase):
     def test_parses_map(self):
         p = RMM()
-        p.parse("RMM,WGS 84*06")
+        p.parse("GPRMM,WGS 84*06")
 
+        self.assertEquals("GP", p.talker_id)
         self.assertEqual("RMM", p.sen_type)
         self.assertEqual("WGS 84", p.datum)
 
@@ -1254,8 +1301,9 @@ class TestRMM(unittest.TestCase):
 class TestRMZ(unittest.TestCase):
     def test_parses_map(self):
         p = RMZ()
-        p.parse("RMZ,492,f,3*14")
+        p.parse("GPRMZ,492,f,3*14")
 
+        self.assertEquals("GP", p.talker_id)
         self.assertEqual("RMZ", p.sen_type)
         self.assertEqual("492", p.altitude)
         self.assertEqual("f", p.altitude_unit)
@@ -1270,13 +1318,13 @@ class TestUtils(unittest.TestCase):
         pass
 
     def test_checksum_calc(self):
-        nmea_str1 = 'GLL,3751.65,S,14507.36,E'
-        nmea_str2 = '$GLL,3751.65,S,14507.36,E'
-        nmea_str3 = 'GLL,3751.65,S,14507.36,E*77'
-        nmea_str4 = '$GLL,3751.65,S,14507.36,E*77'
-        nmea_str5 = '$GLL,3751.65,S,14507.36,E*'
-        nmea_str6 = 'GLL,3751.65,S,14507.36,E*'
-        nmea_str7 = '$HDT,227.66,T*02'
+        nmea_str1 = 'GPGLL,3751.65,S,14507.36,E'
+        nmea_str2 = '$GPGLL,3751.65,S,14507.36,E'
+        nmea_str3 = 'GPGLL,3751.65,S,14507.36,E*77'
+        nmea_str4 = '$GPGLL,3751.65,S,14507.36,E*77'
+        nmea_str5 = '$GPGLL,3751.65,S,14507.36,E*'
+        nmea_str6 = 'GPGLL,3751.65,S,14507.36,E*'
+        nmea_str7 = '$GPHDT,227.66,T*02'
 
         result1 = checksum_calc(nmea_str1)
         result2 = checksum_calc(nmea_str2)
