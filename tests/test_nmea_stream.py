@@ -2,7 +2,7 @@ import os
 from unittest import TestCase
 
 from pynmea.streamer import NMEAStream
-from pynmea.nmea import GPRMC
+from pynmea.nmea import RMC
 
 
 class TestStream(TestCase):
@@ -88,7 +88,7 @@ $GPVTG,16.78,T,,M,74.00,N,137.05,K,A*36
         streamer = NMEAStream()
         sentence = '$GPRMC,184332.07,A,1929.459,S,02410.381,E,74.00,16.78,210410,0.0,E,A*2B'
         sen_type = streamer._get_type(sentence)
-        self.assertTrue(isinstance(sen_type(), GPRMC))
+        self.assertTrue(isinstance(sen_type(), RMC))
 
     def test_read_data_obj(self):
         test_file = os.path.join(os.path.dirname(__file__), 'test_data',
@@ -102,8 +102,8 @@ $GPVTG,16.78,T,,M,74.00,N,137.05,K,A*36
                 nmea_objects += next_data
                 next_data = streamer.get_objects()
 
-        expected_object_types = ['GPRMC', 'GPGGA', 'GPRMC', 'GPGGA', 'GPGLL',
-                                 'GPVTG', 'GPRMC', 'GPGGA', 'GPGLL', 'GPVTG']
+        expected_object_types = ['RMC', 'GGA', 'RMC', 'GGA', 'GLL',
+                                 'VTG', 'RMC', 'GGA', 'GLL', 'VTG']
 
         self.assertEqual(expected_object_types[0], nmea_objects[0].sen_type)
         self.assertEqual(expected_object_types[1], nmea_objects[1].sen_type)
@@ -132,8 +132,8 @@ $GPVTG,16.78,T,,M,74.00,N,137.05,K,A*36
         nmea_objects = streamer.get_objects(data=data)
         nmea_objects += streamer.get_objects(data='')
 
-        expected_object_types = ['GPRMC', 'GPGGA', 'GPRMC', 'GPGGA', 'GPGLL',
-                                 'GPVTG', 'GPRMC', 'GPGGA', 'GPGLL', 'GPVTG']
+        expected_object_types = ['RMC', 'GGA', 'RMC', 'GGA', 'GLL',
+                                 'VTG', 'RMC', 'GGA', 'GLL', 'VTG']
 
         self.assertEqual(expected_object_types[0], nmea_objects[0].sen_type)
         self.assertEqual(expected_object_types[1], nmea_objects[1].sen_type)
