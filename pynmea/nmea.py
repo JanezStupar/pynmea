@@ -57,10 +57,13 @@ class NMEASentence(object):
         self.sen_type = str(self.__class__).split('.')[-1].split('\'')[0]
         self.parts.insert(0, self.talker_id + self.sen_type)
         for index,item in enumerate(self.parse_map,1):
+
+            #get value from the kwargs according to the parse_map key
             value = kwargs.get(item[1],None)
             if not value:
                 setattr(self,item[1],'')
                 self.parts.insert(index,'')
+            #use correct type
             elif self.deserialize and len(item) > 2:
                 deserialized_val = self.deserializer.deserialize(value,item[2])
                 setattr(self,item[1],deserialized_val)
@@ -77,11 +80,11 @@ class NMEASentence(object):
         """
         tmp = []
         if isinstance(self,STALKSentence):
-            tmp.append('STALK')
+            tmp = self.parts
         else:
             tmp.append(self.talker_id + self.sen_type)
-        for elem in self.parse_map:
-           tmp.append(getattr(self,elem[1]))
+            for i,elem in enumerate(self.parse_map):
+                tmp.append(str(getattr(self,elem[1])))
         tmp = (',').join(tmp)
         return '$' + tmp + '*' + checksum_calc(tmp)
 

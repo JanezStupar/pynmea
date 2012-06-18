@@ -1357,6 +1357,35 @@ class TestDeserialize(unittest.TestCase):
         result=serializer.deserialize(10.4,'decimal')
         self.assertNotEqual(decimal.Decimal('10.4'),result)
 
+class TestConstruct(unittest.TestCase):
+
+    def test_construct_nmea_statement(self):
+        sentence = pynmea.nmea.GLL()
+        kwargs = {
+            'lat': 10,
+            'timestamp': 543543
+        }
+        sentence.construct(**kwargs)
+        self.assertEqual(sentence.nmea_sentence,'$IIGLL,10,,,,543543,*46')
+
+    def test_construct_stalk_statement(self):
+        s84 = pynmea.nmea.S84()
+        s86 = pynmea.nmea.S86()
+        s9c = pynmea.nmea.S9C()
+
+        # there is no contruct for s84
+        with self.assertRaises(NotImplementedError) as cm:
+            s84.construct()
+        self.assertEqual(NotImplementedError,type(cm.exception))
+
+        # there is no contruct for s9c
+        with self.assertRaises(NotImplementedError) as cm:
+            s9c.construct()
+        self.assertEqual(NotImplementedError,type(cm.exception))
+
+        kwargs = {'operation': 'autopilot_mode','autopilot_mode': '2'}
+        s86.construct(**kwargs)
+        self.assertEqual(s86.nmea_sentence,'$STALK,86,01,01,FE*4C')
 
 class NmeaTest(unittest.TestCase):
 
