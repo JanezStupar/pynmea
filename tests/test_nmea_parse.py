@@ -1,10 +1,12 @@
+import decimal
 import unittest
+from pynmea import utils
 from pynmea.nmea import (NMEASentence, AAM, ALM, APA, APB, BEC, BOD,
                          BWC, BWR, BWW, GGA, GLL, GSA, GSV, HDG,
                          HDT, ZDA, STN, RMA, RMB, RMC, RTE, R00,
                          TRF, VBW, VTG, WCV, WNC, WPL, XTE,
-                         RME, RMZ, RMM)
-
+                         RME, RMZ, RMM, RSA, HSC, MWD)
+import pynmea.nmea
 from pynmea.utils import checksum_calc
 
 class TestNMEAParse(unittest.TestCase):
@@ -76,7 +78,6 @@ class TestNMEAParse(unittest.TestCase):
         result = p.check_chksum()
 
         self.assertFalse(result)
-
 
 class TestAAM(unittest.TestCase):
     def setUp(self):
@@ -1341,3 +1342,99 @@ class TestUtils(unittest.TestCase):
         self.assertEquals(result5, '77')
         self.assertEquals(result6, '77')
         self.assertEquals(result7, '02')
+
+class TestDeserialize(unittest.TestCase):
+    def setUp(self):
+        pass
+
+    def test_decimal_success(self):
+        serializer = utils.NMEADeserializer()
+        result=serializer.deserialize('10.4','decimal')
+        self.assertEqual(decimal.Decimal('10.4'),result)
+
+    def test_decimal_failure(self):
+        serializer = utils.NMEADeserializer()
+        result=serializer.deserialize(10.4,'decimal')
+        self.assertNotEqual(decimal.Decimal('10.4'),result)
+
+
+class NmeaTest(unittest.TestCase):
+
+    def assert_parse_map_data(self,sentence,sentence_obj):
+        sentence_data = sentence.split('*')[0].split(',')[1:]
+        for i,elem in enumerate(sentence_obj.parse_map):
+            self.assertEqual(sentence_data[i],getattr(sentence_obj,elem[1]))
+
+    def assert_parse_map_data_deserialized(self,sentence,sentence_obj):
+        ds = utils.NMEADeserializer()
+        sentence_data = sentence.split('*')[0].split(',')[1:]
+        for i,elem in enumerate(sentence_obj.parse_map):
+            if len(elem)>2:
+                sentence_data[i]=ds.deserialize(sentence_data[i],elem[2])
+            else:
+                self.assertEqual(sentence_data[i],getattr(sentence_obj,elem[1]))
+
+class TestParse(NmeaTest):
+    def parses_map(self):
+        tmp = self.sentence.split(',',1)[0].replace('$','')
+        type = tmp[2:]
+        tid = tmp[:2]
+        sentence_type=getattr(pynmea.nmea,type)
+
+        p = sentence_type()
+        p.parse(self.sentence)
+        self.assert_parse_map_data(self.sentence,p)
+        self.assertEqual(tid,p.talker_id)
+        self.assertEqual(type,p.sen_type)
+
+        p = sentence_type(deserialize=True)
+        p.parse(self.sentence)
+        self.assert_parse_map_data_deserialized(self.sentence,p)
+        self.assertEqual(tid,p.talker_id)
+        self.assertEqual(type,p.sen_type)
+
+def load_tests(loader,tests,pattern):
+
+    # Process the test for parses_map, for all following sentences
+    sentence_list = [
+        "$IIRSA,100.2,A,100.4,A*51",
+        '$IIHSC,100.2,T,102.3,M*42',
+        '$IIMWD,176.7,T,174.0,M,1.0,N,0.5,M*5B',
+        '$WIMWV,171.8,T,1.3,N,A*28',
+        '$SDDBT,03.6,f,01.1,M,00.6,F*35',
+        '$SDDPT,1.1,0.9,*72',
+        '$HEHDM,356.2,M*2D',
+        '$HEHDT,12.8,T*14',
+    ]
+
+    suite = unittest.TestSuite()
+    for sentence in sentence_list:
+        test = TestParse('parses_map')
+        test.sentence = sentence
+        suite.addTest(test)
+
+    tests.addTests(suite)
+    return tests
+
+#test_suite = suite()
+
+class TestMTW(NmeaTest):
+    pass
+
+class TestVHW(NmeaTest):
+    pass
+
+class TestVLW(NmeaTest):
+    pass
+
+class TestSTALK(NmeaTest):
+    pass
+
+class TestS84(NmeaTest):
+    pass
+
+class TestS9C(NmeaTest):
+    pass
+
+class TestS86(NmeaTest):
+    pass

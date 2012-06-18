@@ -16,7 +16,9 @@ def checksum_calc(nmea_str):
     return "%02X" % chksum_val
 
 class NMEADeserializer(object):
-
+    """
+    Take a string and deserialize it into an appropriate type
+    """
     def deserialize(self,data,type):
         method = getattr(self,'deserialize_'+type)
         if not method:
