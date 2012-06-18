@@ -57,7 +57,7 @@ class TestNMEAParse(unittest.TestCase):
         p.parse(nmea_str)
         result = p.check_chksum()
 
-        self.assertTrue(result)
+        self.assertFalse(result)
 
     def test_checksum_fails_wrong_checksum(self):
         parse_map = ('Checksum', 'checksum')
@@ -461,15 +461,15 @@ class TestGLL(unittest.TestCase):
 
     def test_checksum_passes2(self):
         p = GLL()
-        p.parse("$GPGLL,3751.65,S,14507.36,E*77")
-        p.checksum = '77'
+        p.parse("$GPGLL,4916.45,N,12311.12,W,225444,A*31")
+        p.checksum = '31'
 
         result = p.check_chksum()
         self.assertTrue(result)
 
     def test_checksum_fails2(self):
         p = GLL()
-        p.parse("$GPGLL,3751.65,S,14507.36,E*78")
+        p.parse("$GPGLL,4916.45,N,12311.12,W,225444,A*5C")
         p.checksum = '78'
 
         result = p.check_chksum()
@@ -1393,6 +1393,48 @@ class TestParse(NmeaTest):
         self.assertEqual(tid,p.talker_id)
         self.assertEqual(type,p.sen_type)
 
+class TestSTALK(NmeaTest):
+    pass
+
+
+class TestS84(unittest.TestCase):
+
+    def test_parse_sentence(self):
+        sentence = '$STALK,84,56,EB,AD,42,00,C3,00,08*1E'
+        instance = pynmea.nmea.S84()
+        instance.parse(sentence)
+        self.assertEqual('ST', instance.talker_id)
+        self.assertEqual('S84', instance.sen_type)
+        self.assertEqual(decimal.Decimal('177'), instance.heading)
+        self.assertEqual(0, instance.turning_direction)
+        self.assertEqual(decimal.Decimal('356'), instance.course)
+        self.assertEqual(2, instance.autopilot_mode)
+        self.assertEqual(0, instance.alarm)
+        self.assertEqual(decimal.Decimal('-61'), instance.rudder)
+        self.assertEqual('1E', instance.checksum)
+
+class TestS9C(unittest.TestCase):
+
+    def test_parse_sentence(self):
+        sentence = '$STALK,9C,51,EB,C3*48'
+        instance = pynmea.nmea.S9C()
+        instance.parse(sentence)
+        self.assertEqual('ST', instance.talker_id)
+        self.assertEqual('S9C', instance.sen_type)
+        self.assertEqual(decimal.Decimal('177'), instance.heading)
+        self.assertEqual(0, instance.turning_direction)
+        self.assertEqual(decimal.Decimal('-61'), instance.rudder)
+        self.assertEqual('48', instance.checksum)
+
+class TestS86(NmeaTest):
+
+    def test_parses_map(self):
+        sentence = pynmea.nmea.S86()
+        with self.assertRaises(NotImplementedError) as cm:
+            sentence.parse('$STALK,86,01,01,FE')
+        self.assertEqual(NotImplementedError,type(cm.exception))
+
+
 def load_tests(loader,tests,pattern):
 
     # Process the test for parses_map, for all following sentences
@@ -1405,6 +1447,9 @@ def load_tests(loader,tests,pattern):
         '$SDDPT,1.1,0.9,*72',
         '$HEHDM,356.2,M*2D',
         '$HEHDT,12.8,T*14',
+        '$IIVHW,,T,171,M,133.7,N,133.7,K*62',
+        '$WIMTW,24.2,C*09',
+        '$VWVLW,1072.381,N,1072.381,N*4C',
     ]
 
     suite = unittest.TestSuite()
@@ -1416,25 +1461,3 @@ def load_tests(loader,tests,pattern):
     tests.addTests(suite)
     return tests
 
-#test_suite = suite()
-
-class TestMTW(NmeaTest):
-    pass
-
-class TestVHW(NmeaTest):
-    pass
-
-class TestVLW(NmeaTest):
-    pass
-
-class TestSTALK(NmeaTest):
-    pass
-
-class TestS84(NmeaTest):
-    pass
-
-class TestS9C(NmeaTest):
-    pass
-
-class TestS86(NmeaTest):
-    pass

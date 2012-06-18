@@ -75,7 +75,14 @@ class NMEASentence(object):
         """
         Dump the object data into a NMEA sentence
         """
-        tmp=(',').join(self.parts)
+        tmp = []
+        if isinstance(self,STALKSentence):
+            tmp.append('STALK')
+        else:
+            tmp.append(self.talker_id + self.sen_type)
+        for elem in self.parse_map:
+           tmp.append(getattr(self,elem[1]))
+        tmp = (',').join(tmp)
         return '$' + tmp + '*' + checksum_calc(tmp)
 
     def parse(self, nmea_str, ignore_err=False):
