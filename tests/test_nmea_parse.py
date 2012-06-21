@@ -1422,6 +1422,31 @@ class TestParse(NmeaTest):
         self.assertEqual(tid,p.talker_id)
         self.assertEqual(type,p.sen_type)
 
+class TestNMEAStatement(unittest.TestCase):
+    """
+    Test the nmea_statement property of the NMEA object
+    """
+
+    def test_positive(self):
+        sentence = "$VWVHW,346.0,T,346.0,M,506.0,N,937.1,K*5B"
+        obj = pynmea.nmea.VHW()
+        obj.parse(sentence)
+        self.assertEqual(obj.nmea_sentence,sentence)
+
+    def test_malformed_length(self):
+        sentence = "$VWVHW,00.0,T,00.0"
+        expected_result = "$VWVHW,00.0,T,00.0,,,,,*1C"
+        obj = pynmea.nmea.VHW()
+        obj.parse(sentence)
+        self.assertEqual(obj.nmea_sentence,expected_result)
+
+    def test_malformed_datatype(self):
+        sentence = "$VWVHW,00.0,T,DD"
+        expected_result = "$VWVHW,0.0,T,,,,,,*32"
+        obj = pynmea.nmea.VHW(deserialize=True)
+        obj.parse(sentence)
+        self.assertEqual(obj.nmea_sentence,expected_result)
+
 class TestSTALK(NmeaTest):
     pass
 
@@ -1464,7 +1489,7 @@ class TestS86(NmeaTest):
         self.assertEqual(NotImplementedError,type(cm.exception))
 
 
-def load_tests(loader,tests,pattern):
+def load_tests(*args):
 
     # Process the test for parses_map, for all following sentences
     sentence_list = [
@@ -1487,6 +1512,9 @@ def load_tests(loader,tests,pattern):
         test.sentence = sentence
         suite.addTest(test)
 
-    tests.addTests(suite)
-    return tests
+    if len(args) ==3:
+        tests = args[1]
+        tests.addTests(suite)
+        return tests
+    return suite
 

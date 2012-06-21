@@ -84,7 +84,10 @@ class NMEASentence(object):
         else:
             tmp.append(self.talker_id + self.sen_type)
             for i,elem in enumerate(self.parse_map):
-                tmp.append(str(getattr(self,elem[1])))
+                val = str(getattr(self,elem[1],''))
+                if val is 'NaN':
+                    val = ''
+                tmp.append(val)
         tmp = (',').join(tmp)
         return '$' + tmp + '*' + checksum_calc(tmp)
 
