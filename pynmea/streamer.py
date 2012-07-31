@@ -57,7 +57,10 @@ class NMEAStream(object):
         if not read_data:
             self.head = ''
             return raw_sentences
-        self.head = raw_sentences[-1]
+        try:
+            self.head = raw_sentences[-1]
+        except IndexError:
+            pass
         full_sentences = raw_sentences[:-1]
         return full_sentences
 
