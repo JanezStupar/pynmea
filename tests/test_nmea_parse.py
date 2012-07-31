@@ -1,6 +1,6 @@
 import decimal
 import unittest
-from pynmea import utils
+from pynmea import utils, exceptions
 from pynmea.nmea import (NMEASentence, AAM, ALM, APA, APB, BEC, BOD,
                          BWC, BWR, BWW, GGA, GLL, GSA, GSV, HDG,
                          HDT, ZDA, STN, RMA, RMB, RMC, RTE, R00,
@@ -54,30 +54,21 @@ class TestNMEAParse(unittest.TestCase):
         nmea_str = "$GPGLL,3751.65,S,14507.36,E*77"
         p = NMEASentence(parse_map)
         p.checksum = '77'
-        p.parse(nmea_str)
-        result = p.check_chksum()
-
-        self.assertFalse(result)
+        self.assertRaises(exceptions.ChecksumException,p.parse,nmea_str)
 
     def test_checksum_fails_wrong_checksum(self):
         parse_map = ('Checksum', 'checksum')
         nmea_str = "$GPGLL,3751.65,S,14507.36,E*78"
         p = NMEASentence(parse_map)
         p.checksum = '78'
-        p.parse(nmea_str)
-        result = p.check_chksum()
-
-        self.assertFalse(result)
+        self.assertRaises(exceptions.ChecksumException,p.parse,nmea_str)
 
     def test_checksum_fails_wrong_str(self):
         parse_map = ('Checksum', 'checksum')
         nmea_str = "$GPGLL,3751.65,S,14507.36,W*77"
         p = NMEASentence(parse_map)
         p.checksum = '77'
-        p.parse(nmea_str)
-        result = p.check_chksum()
-
-        self.assertFalse(result)
+        self.assertRaises(exceptions.ChecksumException,p.parse,nmea_str)
 
 class TestAAM(unittest.TestCase):
     def setUp(self):
@@ -140,7 +131,7 @@ class TestAPA(unittest.TestCase):
 
     def test_parses_map(self):
         p = APA()
-        p.parse("$GPAPA,A,A,0.10,R,N,V,V,011,M,DEST*82")
+        p.parse("$GPAPA,A,A,0.10,R,N,V,V,011,M,DEST*3F")
 
         self.assertEquals("GP", p.talker_id)
         self.assertEquals("APA", p.sen_type)
@@ -154,7 +145,7 @@ class TestAPA(unittest.TestCase):
         self.assertEquals("011", p.bearing_to_dest)
         self.assertEquals("M", p.bearing_type)
         self.assertEquals("DEST", p.dest_waypoint_id)
-        self.assertEquals("82", p.checksum)
+        self.assertEquals("3F", p.checksum)
 
 
 class TestAPB(unittest.TestCase):
@@ -166,7 +157,7 @@ class TestAPB(unittest.TestCase):
 
     def test_parses_map(self):
         p = APB()
-        p.parse("$GPAPB,A,A,0.10,R,N,V,V,011,M,DEST,011,M,011,M*82")
+        p.parse("$GPAPB,A,A,0.10,R,N,V,V,011,M,DEST,011,M,011,M*3C")
 
         self.assertEquals("GP", p.talker_id)
         self.assertEquals("APB", p.sen_type)
@@ -184,7 +175,7 @@ class TestAPB(unittest.TestCase):
         self.assertEquals("M", p.bearing_pres_dest_type)
         self.assertEquals("011", p.heading_to_dest)
         self.assertEquals("M", p.heading_to_dest_type)
-        self.assertEquals("82", p.checksum)
+        self.assertEquals("3C", p.checksum)
 
 
 class TestBEC(unittest.TestCase):
@@ -198,7 +189,7 @@ class TestBEC(unittest.TestCase):
         """ No FAA mode indicator
         """
         p = BEC()
-        p.parse("$GPBEC,081837,,,,,,T,,M,,N,*13")
+        p.parse("$GPBEC,081837,,,,,,T,,M,,N,,*2D")
 
         self.assertEquals("GP", p.talker_id)
         self.assertEquals("BEC", p.sen_type)
@@ -214,13 +205,13 @@ class TestBEC(unittest.TestCase):
         self.assertEquals("", p.nautical_miles)
         self.assertEquals("N", p.nautical_miles_sym)
         self.assertEquals("", p.waypoint_id)
-        self.assertEquals("13", p.checksum)
+        self.assertEquals("2D", p.checksum)
 
     def test_parses_map_2(self):
         """ No FAA mode indicator
         """
         p = BEC()
-        p.parse("GPBEC,220516,5130.02,N,00046.34,W,213.8,T,218.0,M,0004.6,N,EGLM*11")
+        p.parse("GPBEC,220516,5130.02,N,00046.34,W,213.8,T,218.0,M,0004.6,N,EGLM,*1F")
 
         self.assertEquals("GP", p.talker_id)
         self.assertEquals("BEC", p.sen_type)
@@ -236,13 +227,13 @@ class TestBEC(unittest.TestCase):
         self.assertEquals("0004.6", p.nautical_miles)
         self.assertEquals("N", p.nautical_miles_sym)
         self.assertEquals("EGLM", p.waypoint_id)
-        self.assertEquals("11", p.checksum)
+        self.assertEquals("1F", p.checksum)
 
     def test_parses_map_3(self):
         """ WITH FAA mode indicator
         """
         p = BEC()
-        p.parse("GPBEC,220516,5130.02,N,00046.34,W,213.8,T,218.0,M,0004.6,N,EGLM,X*11")
+        p.parse("GPBEC,220516,5130.02,N,00046.34,W,213.8,T,218.0,M,0004.6,N,EGLM,X*47")
 
         self.assertEquals("GP", p.talker_id)
         self.assertEquals("BEC", p.sen_type)
@@ -259,7 +250,7 @@ class TestBEC(unittest.TestCase):
         self.assertEquals("N", p.nautical_miles_sym)
         self.assertEquals("EGLM", p.waypoint_id)
         self.assertEquals("X", p.faa_mode)
-        self.assertEquals("11", p.checksum)
+        self.assertEquals("47", p.checksum)
 
 
 class TestBOD(unittest.TestCase):
@@ -365,7 +356,7 @@ class TestBWW(unittest.TestCase):
 
     def test_parses_map(self):
         p = BWW()
-        p.parse("$GPBWW,x.x,T,x.x,M,c--c,c--c*ff")
+        p.parse("$GPBWW,x.x,T,x.x,M,c--c,c--c*4C")
 
         self.assertEquals("GP", p.talker_id)
         self.assertEquals("BWW", p.sen_type)
@@ -375,7 +366,7 @@ class TestBWW(unittest.TestCase):
         self.assertEquals("M", p.bearing_deg_mag_sym)
         self.assertEquals("c--c", p.waypoint_id_dest)
         self.assertEquals("c--c", p.waypoint_id_orig)
-        self.assertEquals("ff", p.checksum)
+        self.assertEquals("4C", p.checksum)
 
 
 class TestGGA(unittest.TestCase):
@@ -469,11 +460,7 @@ class TestGLL(unittest.TestCase):
 
     def test_checksum_fails2(self):
         p = GLL()
-        p.parse("$GPGLL,4916.45,N,12311.12,W,225444,A*5C")
-        p.checksum = '78'
-
-        result = p.check_chksum()
-        self.assertFalse(result)
+        self.assertRaises(exceptions.ChecksumException,p.parse,"$GPGLL,4916.45,N,12311.12,W,225444,A*5C")
 
     def test_gets_properties(self):
         p = GLL()
@@ -529,11 +516,7 @@ class TestGSA(unittest.TestCase):
     def test_checksum_fails(self):
         p = GSA()
         p.checksum = '38'
-        p.parse("$GPGSA,A,3,04,05,,09,12,,,24,,,,,2.5,1.3,2.1*38")
-
-        result = p.check_chksum()
-
-        self.assertFalse(result)
+        self.assertRaises(exceptions.ChecksumException,p.parse,"$GPGSA,A,3,04,05,,09,12,,,24,,,,,2.5,1.3,2.1*38")
 
 
 class TestGSV(unittest.TestCase):
@@ -621,11 +604,7 @@ class TestHDG(unittest.TestCase):
     def test_checksum_fails(self):
         p = HDG()
         p.checksum = '7E'
-        p.parse("$GPHDG,190.7,,E,0.0,E*7E")
-
-        result = p.check_chksum()
-
-        self.assertFalse(result)
+        self.assertRaises(exceptions.ChecksumException,p.parse,"$GPHDG,190.7,,E,0.0,E*7E")
 
 
 class TestHDT(unittest.TestCase):
@@ -657,12 +636,7 @@ class TestHDT(unittest.TestCase):
     def test_checksum_fails(self):
         p = HDT()
         p.checksum = '03'
-        p.parse('$GPHDT,227.66,T*03')
-
-        result = p.check_chksum()
-
-        self.assertFalse(result)
-
+        self.assertRaises(exceptions.ChecksumException,p.parse,'$GPHDT,227.66,T*03')
 
 class TestGPR00(unittest.TestCase):
     def setUp(self):
@@ -748,9 +722,7 @@ class TestRMA(unittest.TestCase):
     def test_checksum_fails(self):
         p = RMA()
         p.checksum = '52'
-        p.parse('$GPRMA,A,4630.129,N,147.372,W,,,12.2,5,7,N*52')
-        result = p.check_chksum()
-        self.assertFalse(result)
+        self.assertRaises(exceptions.ChecksumException,p.parse,'$GPRMA,A,4630.129,N,147.372,W,,,12.2,5,7,N*52')
 
 
 class TestRMB(unittest.TestCase):
@@ -838,9 +810,7 @@ class TestRMB(unittest.TestCase):
     def test_checksum_fails(self):
         p = RMB()
         p.checksum = '21'
-        p.parse('$GPRMB,A,0.66,L,003,004,4917.24,N,12309.57,W,001.3,052.5,000.5,V*21')
-        result = p.check_chksum()
-        self.assertFalse(result)
+        self.assertRaises(exceptions.ChecksumException,p.parse,'$GPRMB,A,0.66,L,003,004,4917.24,N,12309.57,W,001.3,052.5,000.5,V*21')
 
 
 class TestRMC(unittest.TestCase):
@@ -917,9 +887,7 @@ class TestRMC(unittest.TestCase):
     def test_checksum_fails(self):
         p = RMC()
         p.checksum = '71'
-        p.parse('$GPRMC,220516,A,5133.82,N,00042.24,W,173.8,231.8,130694,004.2,W*71')
-        result = p.check_chksum()
-        self.assertFalse(result)
+        self.assertRaises(exceptions.ChecksumException,p.parse,'$GPRMC,220516,A,5133.82,N,00042.24,W,173.8,231.8,130694,004.2,W*71')
 
 
 class TestRTE(unittest.TestCase):
@@ -1142,11 +1110,7 @@ class TestZDA(unittest.TestCase):
     def test_checksum_fails(self):
         p = ZDA()
         p.checksum = 'b5'
-        p.parse('$GPZDA,025959.000,01,01,1970,,*b5')
-
-        result = p.check_chksum()
-
-        self.assertFalse(result)
+        self.assertRaises(exceptions.ChecksumException,p.parse,'$GPZDA,025959.000,01,01,1970,,*b5')
 
 
 class TestWCV(unittest.TestCase):
@@ -1178,11 +1142,7 @@ class TestWCV(unittest.TestCase):
     def test_checksum_fails(self):
         p = WCV()
         p.checksum = '1B'
-        p.parse('$GPWCV,2.3,N,ABCD*1B')
-
-        result = p.check_chksum()
-
-        self.assertFalse(result)
+        self.assertRaises(exceptions.ChecksumException,p.parse,'$GPWCV,2.3,N,ABCD*1B')
 
 
 class TestWNC(unittest.TestCase):
@@ -1194,7 +1154,7 @@ class TestWNC(unittest.TestCase):
 
     def test_parses_map(self):
         p = WNC()
-        p.parse("$GPWNC,1.1,N,2.2,K,c--c,c--c*ff")
+        p.parse("$GPWNC,1.1,N,2.2,K,c--c,c--c*48")
 
         self.assertEquals("GP", p.talker_id)
         self.assertEquals("WNC", p.sen_type)
@@ -1204,7 +1164,7 @@ class TestWNC(unittest.TestCase):
         self.assertEquals("K", p.dist_km_unit)
         self.assertEquals("c--c", p.waypoint_origin_id)
         self.assertEquals("c--c", p.waypoint_dest_id)
-        self.assertEquals("ff", p.checksum)
+        self.assertEquals("48", p.checksum)
 
 
 class TestWPL(unittest.TestCase):
@@ -1493,9 +1453,9 @@ def load_tests(*args):
 
     # Process the test for parses_map, for all following sentences
     sentence_list = [
-        "$IIRSA,100.2,A,100.4,A*51",
+        "$IIRSA,100.2,A,100.4,A*46",
         '$IIHSC,100.2,T,102.3,M*42',
-        '$IIMWD,176.7,T,174.0,M,1.0,N,0.5,M*5B',
+        '$IIMWD,176.7,T,174.0,M,1.0,N,0.5,M*45',
         '$WIMWV,171.8,T,1.3,N,A*28',
         '$SDDBT,03.6,f,01.1,M,00.6,F*35',
         '$SDDPT,1.1,0.9,*72',

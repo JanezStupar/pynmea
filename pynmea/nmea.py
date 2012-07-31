@@ -2,6 +2,7 @@
 import decimal
 import re
 from pynmea.utils import checksum_calc, NMEADeserializer
+from pynmea import exceptions
 
 class NMEASentence(object):
     """ Base sentence class. This is used to pull apart a sentence.
@@ -102,6 +103,7 @@ class NMEASentence(object):
 
         self._parse(nmea_str)
 
+
         #assert len(self.parts[1:]) <= len(self.parse_map)
         parts_len = len(self.parts) - 1
 
@@ -114,8 +116,16 @@ class NMEASentence(object):
                 setattr(self,item[1],val)
             else:
                 setattr(self, item[1], self.parts[index + 1])
-        #for index, item in enumerate(self.parts[1:]):
-            #setattr(self, self.parse_map[index][1], item)
+
+        #if deserialization is enabled some data (visavis checksum) may get lost (e.g. 010.4 becomes 10.4 in Decimal)
+        #which means that dynamically constructed statements won't match the original data, which will mean a new
+        #checksum.
+        if self.deserialize:
+            self.checksum = checksum_calc(self.nmea_sentence)
+
+        #Check the checksum
+        if hasattr(self,'checksum') and not self.check_chksum():
+            raise exceptions.ChecksumException('Checksum error for nmea statement: %s' % nmea_str)
 
     def check_chksum(self):
         # If there is no checksum, raise AssertionError
@@ -1110,6 +1120,7 @@ class DPT(NMEASentence):
         parse_map = (
             ("Depth meters","depth","decimal"),
             ("Offset from transducer","offset","decimal"),
+            ("Maximum range on scale","max_range","decimal")
         )
         super(DPT,self).__init__(parse_map,**kwargs)
 
