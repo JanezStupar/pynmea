@@ -25,7 +25,7 @@ class NMEASentence(object):
         self.parts = nmea_str.split(',')
 
         chksum_regex = re.compile(r".+((\*{1})(?i)(?P<chksum>[0-9a-f]{2}))$")
-        m = chksum_regex.match(nmea_str)
+        m = chksum_regex.search(nmea_str)
 
         if m:
             self.checksum = m.groupdict()['chksum']
@@ -140,6 +140,10 @@ class STALKSentence(NMEASentence):
 
     def parse(self, stalk_str, ignore_err=False):
         self._parse(stalk_str)
+
+        #Check the checksum
+        if hasattr(self,'checksum') and not self.check_chksum():
+            raise exceptions.ChecksumException('Checksum error for nmea statement: %s' % stalk_str)
 
     def construct(self,**kwargs):
         raise NotImplementedError
@@ -619,7 +623,8 @@ class GLL(NMEASentence):
             ('Longitude', 'lon'),
             ('Longitude Direction', 'lon_dir'),
             ('Timestamp', 'timestamp'),
-            ('Data Validity', "data_valid"))
+            ('Data Validity', "data_valid"),
+            ("FAA mode indicator", "faa_mode"))
 
         super(GLL, self).__init__(parse_map,**kwargs)
 
@@ -970,7 +975,8 @@ class VTG(NMEASentence):
             ("Speed over ground knots", "spd_over_grnd_kts","decimal"),
             ("Speed over ground symbol", "spd_over_grnd_kts_sym"),
             ("Speed over ground kmph", "spd_over_grnd_kmph","decimal"),
-            ("Speed over ground kmph symbol", "spd_over_grnd_kmph_sym"))
+            ("Speed over ground kmph symbol", "spd_over_grnd_kmph_sym"),
+            ("FAA mode indicator", "faa_mode"))
 
         super(VTG, self).__init__(parse_map,**kwargs)
 

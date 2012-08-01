@@ -408,7 +408,7 @@ class TestGLL(unittest.TestCase):
 
     def test_parses_map1(self):
         p = GLL()
-        p.parse("$GPGLL,3751.65,S,14507.36,E*77")
+        p.parse("$GPGLL,3751.65,S,14507.36,E,,,*5B")
 
         self.assertEquals("GP", p.talker_id)
         self.assertEquals("GLL", p.sen_type)
@@ -417,7 +417,7 @@ class TestGLL(unittest.TestCase):
         self.assertEquals("14507.36", p.lon)
         self.assertEquals("E", p.lon_dir)
         #self.assertEquals("", p.timestamp) # No timestamp given
-        self.assertEquals("77", p.checksum)
+        self.assertEquals("5B", p.checksum)
 
     def test_parses_map2(self):
         p = GLL()
@@ -452,8 +452,8 @@ class TestGLL(unittest.TestCase):
 
     def test_checksum_passes2(self):
         p = GLL()
-        p.parse("$GPGLL,4916.45,N,12311.12,W,225444,A*31")
-        p.checksum = '31'
+        p.parse("$GPGLL,4916.45,N,12311.12,W,225444,A,*1D")
+        p.checksum = '1D'
 
         result = p.check_chksum()
         self.assertTrue(result)
@@ -464,13 +464,13 @@ class TestGLL(unittest.TestCase):
 
     def test_gets_properties(self):
         p = GLL()
-        p.parse("$GPGLL,3751.65,S,14507.36,E*77")
+        p.parse("$GPGLL,3751.65,S,14507.36,E,,,*5B")
 
         self.assertEquals(p.latitude, float('3751.65'))
         self.assertEquals(p.longitude, float('14507.36'))
         self.assertEquals(p.lat_direction, 'South')
         self.assertEquals(p.lon_direction, 'East')
-        self.assertEquals(p.checksum, "77")
+        self.assertEquals(p.checksum, "5B")
 
 class TestGSA(unittest.TestCase):
     def setUp(self):
@@ -1024,7 +1024,7 @@ class TestVTG(unittest.TestCase):
 
     def test_parses_map_1(self):
         p = VTG()
-        p.parse("$GPVTG,360.0,T,348.7,M,000.0,N,000.0,K*43")
+        p.parse("$GPVTG,360.0,T,348.7,M,000.0,N,000.0,K,*6F")
 
         self.assertEquals("GP", p.talker_id)
         self.assertEquals("VTG", p.sen_type)
@@ -1036,7 +1036,7 @@ class TestVTG(unittest.TestCase):
         self.assertEquals("N", p.spd_over_grnd_kts_sym)
         self.assertEquals("000.0", p.spd_over_grnd_kmph)
         self.assertEquals("K", p.spd_over_grnd_kmph_sym)
-        self.assertEquals('43', p.checksum)
+        self.assertEquals('6F', p.checksum)
 
     def test_parses_map_2(self):
         p = VTG()
@@ -1326,7 +1326,7 @@ class TestConstruct(unittest.TestCase):
             'timestamp': 543543
         }
         sentence.construct(**kwargs)
-        self.assertEqual(sentence.nmea_sentence,'$IIGLL,10,,,,543543,*46')
+        self.assertEqual(sentence.nmea_sentence,'$IIGLL,10,,,,543543,,*6A')
 
     def test_construct_stalk_statement(self):
         s84 = pynmea.nmea.S84()
@@ -1427,6 +1427,15 @@ class TestS84(unittest.TestCase):
         self.assertEqual(decimal.Decimal('-61'), instance.rudder)
         self.assertEqual('1E', instance.checksum)
 
+    def test_malformed_data(self):
+        sentence = '$STALK,84,56,EB,DD,42,00,C3,00,08*1E'
+        instance = pynmea.nmea.S84()
+        self.assertRaises(exceptions.ChecksumException,instance.parse,sentence)
+
+        sentence = '$STALK,84,56,EB,\nAD,42,00,C3,00,08*1E'
+        instance = pynmea.nmea.S84()
+        self.assertRaises(exceptions.ChecksumException,instance.parse,sentence)
+
 class TestS9C(unittest.TestCase):
 
     def test_parse_sentence(self):
@@ -1440,6 +1449,15 @@ class TestS9C(unittest.TestCase):
         self.assertEqual(decimal.Decimal('-61'), instance.rudder)
         self.assertEqual('48', instance.checksum)
 
+    def test_malformed_data(self):
+        sentence = '$STALK,9C,51,EE,C3*48'
+        instance = pynmea.nmea.S84()
+        self.assertRaises(exceptions.ChecksumException,instance.parse,sentence)
+
+        sentence = '$STALK,9C,51,EB,\nC3*48'
+        instance = pynmea.nmea.S84()
+        self.assertRaises(exceptions.ChecksumException,instance.parse,sentence)
+
 class TestS86(NmeaTest):
 
     def test_parses_map(self):
@@ -1447,7 +1465,6 @@ class TestS86(NmeaTest):
         with self.assertRaises(NotImplementedError) as cm:
             sentence.parse('$STALK,86,01,01,FE')
         self.assertEqual(NotImplementedError,type(cm.exception))
-
 
 def load_tests(*args):
 
