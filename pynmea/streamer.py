@@ -1,6 +1,6 @@
 """ For dealing with streams of nmea data
 """
-from pynmea.exceptions import NoDataGivenError
+from pynmea.exceptions import NoDataGivenError, ChecksumException
 
 
 class NMEAStream(object):
@@ -32,8 +32,12 @@ class NMEAStream(object):
             except TypeError:
                 # NMEA sentence was not recognised
                 continue
-            nmea_ob.parse(nmea_str)
-            nmea_objects.append(nmea_ob)
+            try:
+                nmea_ob.parse(nmea_str)
+                nmea_objects.append(nmea_ob)
+            except ChecksumException:
+                #NMEA object was invalid, do not add it to the object list
+                pass
 
         return nmea_objects
 
