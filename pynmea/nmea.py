@@ -80,7 +80,7 @@ class NMEASentence(object):
         Dump the object data into a NMEA sentence
         """
         tmp = []
-        if isinstance(self,STALKSentence):
+        if isinstance(self,STALKSentence) or isinstance(self, TMQSentence):
             tmp = self.parts
         else:
             tmp.append(self.talker_id + self.sen_type)
@@ -133,6 +133,20 @@ class NMEASentence(object):
 
         result = checksum_calc(self.nmea_sentence)
         return (result.upper() == self.checksum.upper())
+
+class TMQSentence(NMEASentence):
+    def __init__(self, **kwargs):
+        self.talker_id = 'PT'
+
+    def parse(self, tmq_str, ignore_err=False):
+        self._parse(tmq_str)
+
+        #Check the checksum
+        if hasattr(self,'checksum') and not self.check_chksum():
+            raise exceptions.ChecksumException('Checksum error for nmea statement: %s' % tmq_str)
+
+    def construct(self,**kwargs):
+        raise NotImplementedError
 
 class STALKSentence(NMEASentence):
     def __init__(self,**kwargs):
@@ -398,11 +412,40 @@ class S86(STALKSentence):
 
         raise NotImplementedError
 
+# ---------------------------------------------------------------------------- #
+#   TMQ Autopilot proprietary sentences.
+#   According to the TMQ documentation
+#
+# Warning: If you are using
+# ---------------------------------------------------------------------------- #
+class MQA(TMQSentence):
+    """
+    Autopilot MCU (Master Control Unit) to head
+
+    NMEA Sentence spec:
+    $PTMQA,123M56789MA*hh
+        1 - Current Mode
+        2 - Current CTS (Course To Sail) Hight Byte
+        3 - Current CTS (Course To Sail) Low Byte
+        M - CTS Magnetic/True
+        5 - Rudder Adjust. Rudder Tolerance
+        6 - Rudder Adjust. Sensitivity
+        7 - Rudder Angle
+        8 - Current Heading (High Byte)
+        9 - Current Heading (Low Byte)
+        M - Heading Magnetic/True
+        A - Alarm State
 
 
+    An example of raw sentence: "$PTMQA,\x01\x02$M\x08\x05\x91\x02$M\x00*E8\r\n"
+    """
+    def parse(self, tmq_str, ignore_err=False):
+        super(MQA,self).parse(tmq_str)
+
+        print 'test'
 
 # ---------------------------------------------------------------------------- #
-# Here are all the currently supported sentences. All should eventually be
+# Here are all the currently supported NMEA sentences. All should eventually be
 # supported. They are being added as properties and other useful functions are
 # implimented. Unit tests are also provided.
 # ---------------------------------------------------------------------------- #

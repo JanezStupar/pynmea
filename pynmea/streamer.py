@@ -1,6 +1,7 @@
 """ For dealing with streams of nmea data
 """
 from pynmea.exceptions import NoDataGivenError, ChecksumException
+import re
 
 
 class NMEAStream(object):
@@ -43,9 +44,9 @@ class NMEAStream(object):
 
 
     def _read(self, data=None, size=1024):
-        """ Read size bytes of data. Always strip off the last record and
+        """ read size bytes of data. always strip off the last record and
             append to the start of the data stream on the next call.
-            This ensures that only full sentences are returned.
+            this ensures that only full sentences are returned.
         """
         if not data and not self.stream and not self.head:
             # If there's no data and no stream, raise an error
@@ -121,3 +122,83 @@ class NMEAStream(object):
                 clean_sentences.append(cleaned_item)
 
         return clean_sentences
+
+class TMQStream(NMEAStream):
+    """
+    This class is used to process "NMEA" data sent by TMQ devices.
+
+    This privilege is bestowed upon TMQ, since they are a bunch of fuktards who can't
+    get right as simple a task as implementing a simple serial protocol. Even.
+
+    There are some major problems with TMQ data, which is sent in binary format. Such as stated
+    below.
+
+    The specification of NMEA protocol encoding: http://catb.org/gpsd/NMEA.html#_nmea_encoding_conventions
+
+    TMQ devices commit some major crimes such as:
+
+        # Start delimiter as data
+        '$PTMQA,\x01\x02$M\x08\x05a\x02$M\x00*18\r\n'
+        compass angle: 137
+
+        # Newline as data
+        '$PTMQA,\x01\x04\n'
+        compass angle: 258
+
+        # End delimiter (*) as data
+        '$PTMQA,\x01\x02*M\x08\x05\\\x02*M\x00*25\r\n'
+        compass angle: 138
+
+    The strategy used to solve this mess is following:
+
+        1. Treat statement name ('PTMQA') as delimiter.
+        2. Treat statements as fixed length strings.
+        3. Assume that TMQ statements always provide \r\n at the end of statement
+    """
+#    def _get_type(self, sentence):
+#        pass
+
+    def _split(self, data, separator=None):
+        """
+        Rip apart TMQ sentences.
+
+         We split them using TMQ's prefix "$PTMQ" as statement delimiter.
+         Everything else is dropped. This is necessary as TMQ doesn't conform to the
+         NMEA standard in regards of data encoding.
+
+        Separator parameter is ignored.
+        """
+#        sentences = data.split('$PTMQ')
+        sentences = re.split('\$(?=PTMQ)', data)
+        clean_sentences = []
+        for item in sentences:
+            # 'clean' the item. Contrast this with NMEAStream's _split method. We cannot use rstrip, because
+            # in TMQ format newline (\n) may be a part of valid data, which we don't want to remove.
+            # Thus we might pass some technically incorrect data through (e.g. an ordinary NMEA statement),
+            # because we have no way of discerning a partial TMQ statement from a valid NMEA statement
+            # e.g.: "$GPHDT,100.2,T\n" cannot be differentiated from a part of TMQ statement that would contain
+            # something like "$\x01\n" -> consider a hipothetical statement "$PTMQD,\x01$\x02\n\x04*7D"
+            parts = item.split('\r\n')
+            cleaned_item = parts[0]
+            # Check for checksum, but just if item ends with \r\n and there is a * character as
+            # [-3] of the cleaned item.
+            # This is necessary since this library needs to support streaming operation and with TMQ
+            # it is quite possible to have a partial statement with a * character as data point somewhere
+            # where a checksum could be expected in a standards compiant NMEA statement.
+            if len(parts) == 2 and  '*' == cleaned_item[-3]:
+                # There must be a checksum. Remove any trailing fluff:
+                try:
+                    first = cleaned_item[:-3]
+                    checksum = cleaned_item[-2:]
+                except ValueError:
+                    # Some GPS data recorders have been shown to output
+                    # run-together sentences (no leading $).
+                    # In this case, ignore error and continue, discarding the
+                    # erroneous data.
+                    continue
+                cleaned_item = '*'.join([first, checksum[:2]])
+            if cleaned_item:
+                clean_sentences.append(cleaned_item)
+
+        return clean_sentences
+
