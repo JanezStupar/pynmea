@@ -159,8 +159,8 @@ class TMQSentence(NMEASentence):
         return  ((hbyte<<8) | lbyte) / 4
 
     def _encode_heading(self, heading):
-        hbyte = heading*4 >> 8
-        lbyte = heading*4 & 255
+        hbyte = int(heading*4) >> 8
+        lbyte = int(heading*4) & 255
 
         return chr(hbyte),chr(lbyte)
 
