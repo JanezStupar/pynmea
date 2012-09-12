@@ -138,8 +138,8 @@ class TMQSentence(NMEASentence):
 
     # we use the same values for autopilot mode as SEATALK
     _AUTOPILOT_MODES = {
-        'standby': 0,
-        'auto': 2
+        'standby': '0',
+        'auto': '2'
     }
 
     def __init__(self, **kwargs):
@@ -311,8 +311,8 @@ class S86(STALKSentence):
 
     # we use the same values for autopilot mode as SEATALK
     _AUTOPILOT_MODES = {
-        'standby': 0,
-        'auto': 2
+        'standby': '0',
+        'auto': '2'
     }
 
     def parse(self,stalk_str,**kwargs):
