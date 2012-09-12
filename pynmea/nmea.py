@@ -135,6 +135,13 @@ class NMEASentence(object):
         return (result.upper() == self.checksum.upper())
 
 class TMQSentence(NMEASentence):
+
+    # we use the same values for autopilot mode as SEATALK
+    _AUTOPILOT_MODES = {
+        'standby': 0,
+        'auto': 2
+    }
+
     def __init__(self, **kwargs):
         self.talker_id = 'PT'
 
@@ -147,6 +154,19 @@ class TMQSentence(NMEASentence):
 
     def construct(self,**kwargs):
         raise NotImplementedError
+
+    def _compute_heading(self,hbyte,lbyte):
+        return  ((hbyte<<8) | lbyte) / 4
+
+    def _encode_heading(self, heading):
+        hbyte = heading*4 >> 8
+        lbyte = heading*4 & 255
+
+        return chr(hbyte),chr(lbyte)
+
+    def _compute_rudder_position(self, angle):
+        # rudder angle Left(Port) 0 - 128 (Center) - 255 Right (Starboard)
+        return round(-45 + (angle/float(128) * 45), 1)
 
 class STALKSentence(NMEASentence):
     def __init__(self,**kwargs):
@@ -289,6 +309,12 @@ class S86(STALKSentence):
     Seatalk Datagram 86, Remote control for autopilot.
     """
 
+    # we use the same values for autopilot mode as SEATALK
+    _AUTOPILOT_MODES = {
+        'standby': 0,
+        'auto': 2
+    }
+
     def parse(self,stalk_str,**kwargs):
         """
         WARNING! Not all options are necessarily implemented!
@@ -357,8 +383,6 @@ class S86(STALKSentence):
         """
         This sentence is in a prototype phase
         """
-        X = 0 #TODO: Autopilot type is hardcoded
-
         self.talker_id = 'ST'
         self.sen_type = 'S86'
 
@@ -376,11 +400,11 @@ class S86(STALKSentence):
         if mode == 'autopilot_mode':
             new_mode=kwargs.get('autopilot_mode',None)
 
-            if new_mode == '0':
+            if new_mode == self._AUTOPILOT_MODES['standby']:
                 self.parts.insert(3,'02')
                 self.parts.insert(4,'FD')
                 return
-            elif new_mode == '2':
+            elif new_mode == self._AUTOPILOT_MODES['auto']:
                 self.parts.insert(3,'01')
                 self.parts.insert(4,'FE')
                 return
@@ -420,29 +444,123 @@ class S86(STALKSentence):
 # ---------------------------------------------------------------------------- #
 class MQA(TMQSentence):
     """
+    TMQ PTMQA Sentence datagram
+
     Autopilot MCU (Master Control Unit) to head
-
-    NMEA Sentence spec:
-    $PTMQA,123M56789MA*hh
-        1 - Current Mode
-        2 - Current CTS (Course To Sail) Hight Byte
-        3 - Current CTS (Course To Sail) Low Byte
-        M - CTS Magnetic/True
-        5 - Rudder Adjust. Rudder Tolerance
-        6 - Rudder Adjust. Sensitivity
-        7 - Rudder Angle
-        8 - Current Heading (High Byte)
-        9 - Current Heading (Low Byte)
-        M - Heading Magnetic/True
-        A - Alarm State
-
-
-    An example of raw sentence: "$PTMQA,\x01\x02$M\x08\x05\x91\x02$M\x00*E8\r\n"
     """
+
     def parse(self, tmq_str, ignore_err=False):
+        """
+        NMEA Sentence spec:
+        $PTMQA,123M56789MA*hh
+            1 - Current Mode
+            2 - Current CTS (Course To Sail) Hight Byte
+            3 - Current CTS (Course To Sail) Low Byte
+            M - CTS Magnetic/True
+            5 - Rudder Adjust. Rudder Tolerance
+            6 - Rudder Adjust. Sensitivity
+            7 - Rudder Angle
+            8 - Current Heading (High Byte)
+            9 - Current Heading (Low Byte)
+            M - Heading Magnetic/True
+            A - Alarm State
+
+
+        An example of raw sentence: "$PTMQA,\x01\x02$M\x08\x05\x91\x02$M\x00*E8\r\n"
+        """
         super(MQA,self).parse(tmq_str)
 
-        print 'test'
+        self.sen_type = 'MQA'
+
+        # compute autopilot mode
+        data = self.parts[1]
+        mode = ord(data[0])
+
+        #Check for supported modes, we currently only support auto and standby modes
+        if not mode in [1,2]:
+            raise exceptions.TMQException('Unsupported AutoPilot mode!')
+        elif mode == 1:
+            #Standby mode
+            self.autopilot_mode = self._AUTOPILOT_MODES['standby']
+        elif mode == 2:
+            #Auto mode
+            self.autopilot_mode = self._AUTOPILOT_MODES['auto']
+
+        # compute course
+        hbyte_course = ord(data[1])
+        lbyte_course = ord(data[2])
+        self.course = self._compute_heading(hbyte_course, lbyte_course)
+        self.course_type = data[3] # M (magnetic) or T (true)
+
+        # rudder tolerance 0 - 10
+        self.rudder_tolerance = ord(data[4])
+
+        # rudder sensitivity 0 - 10
+        self.rudder_sensitivity = ord(data[5])
+
+        # rudder angle
+        self.rudder = self._compute_rudder_position(ord(data[6]))
+
+        # compute heading
+        hbyte_heading = ord(data[7])
+        lbyte_heading = ord(data[8])
+        self.heading = self._compute_heading(hbyte_heading, lbyte_heading)
+        self.heading_type = data[9] # M (magnetic) or T (true)
+
+        # compute alarm
+        # Alarm can have following values:
+        #   1 -> GPS Error, No XTE
+        #   2 -> Steering error, Angle off course
+        #   4 -> Compass Error, No External Compass Input
+        #   5 -> Watch Alarm Timer. Time out occurred
+        #   6 -> Alarm Timer. Time out occurred
+        self.alarm = ord(data[10])
+
+class MQH(TMQSentence):
+
+    def parse(self, tmq_str, ignore_err=False):
+        raise NotImplementedError
+
+    def construct(self, **kwargs):
+        """
+        This sentence is in a prototype phase
+        """
+        self.talker_id = 'PT'
+        self.sen_type = 'MQH'
+
+        if not hasattr(self, 'parts'):
+            self.parts = []
+
+        self.parts.insert(0, 'PTMQH')
+
+        # compute command
+        mode = kwargs.get('operation', None)
+        if not mode:
+            raise NotImplementedError
+
+        if mode == 'autopilot_mode':
+            new_mode=kwargs.get('autopilot_mode',None)
+
+            if new_mode == self._AUTOPILOT_MODES['standby']:
+                self.parts.insert(1,'\x01\x01\x00\x00')
+                return
+            elif new_mode == self._AUTOPILOT_MODES['auto']:
+                self.parts.insert(1,'\x01\x02\x00\x00')
+                return
+            else:
+                raise NotImplementedError
+
+        if mode == 'course_change':
+            new_course = kwargs.get('course_change', None)
+
+            if new_course:
+                hbyte, lbyte = self._encode_heading(new_course)
+                self.parts.insert(1,'\x02'+hbyte+lbyte+'\x00')
+                return
+            else:
+                raise NotImplementedError
+
+        raise NotImplementedError
 
 # ---------------------------------------------------------------------------- #
 # Here are all the currently supported NMEA sentences. All should eventually be

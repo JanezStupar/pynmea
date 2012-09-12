@@ -7,3 +7,6 @@ class NoDataGivenError(Exception):
 
 class ChecksumException(Exception):
     pass
+
+class TMQException(Exception):
+    pass
