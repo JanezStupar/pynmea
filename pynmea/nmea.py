@@ -156,7 +156,7 @@ class TMQSentence(NMEASentence):
         raise NotImplementedError
 
     def _compute_heading(self,hbyte,lbyte):
-        return  ((hbyte<<8) | lbyte) / 4
+        return  decimal.Decimal(((hbyte<<8) | lbyte) / 4)
 
     def _encode_heading(self, heading):
         hbyte = int(heading*4) >> 8
@@ -166,7 +166,7 @@ class TMQSentence(NMEASentence):
 
     def _compute_rudder_position(self, angle):
         # rudder angle Left(Port) 0 - 128 (Center) - 255 Right (Starboard)
-        return round(-45 + (angle/float(128) * 45), 1)
+        return decimal.Decimal(round(-45 + (angle/float(128) * 45), 1))
 
 class STALKSentence(NMEASentence):
     def __init__(self,**kwargs):

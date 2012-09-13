@@ -1466,6 +1466,44 @@ class TestS86(NmeaTest):
             sentence.parse('$STALK,86,01,01,FE')
         self.assertEqual(NotImplementedError,type(cm.exception))
 
+class TestMQA(unittest.TestCase):
+
+    def test_parse_sentence(self):
+        sentence = '$PTMQA,\x01\x02$M\x08\x05\x91\x02$M\x00*E8'
+        instance = pynmea.nmea.MQA()
+        instance.parse(sentence)
+        self.assertEqual('PT', instance.talker_id)
+        self.assertEqual('MQA', instance.sen_type)
+        self.assertEqual(0, instance.alarm)
+        self.assertEqual('E8', instance.checksum)
+        self.assertEqual('0', instance.autopilot_mode)
+        self.assertEqual(decimal.Decimal(137), instance.course)
+        self.assertEqual('M', instance.course_type)
+        self.assertEqual(decimal.Decimal(137), instance.heading)
+        self.assertEqual('M', instance.heading_type)
+        self.assertEqual(decimal.Decimal(6.0), instance.rudder)
+        self.assertEqual(5, instance.rudder_sensitivity)
+        self.assertEqual(8, instance.rudder_tolerance)
+
+    def test_construct(self):
+        sentence = pynmea.nmea.MQA()
+        with self.assertRaises(NotImplementedError) as cm:
+            sentence.construct()
+        self.assertEqual(NotImplementedError,type(cm.exception))
+
+class TestMQH(unittest.TestCase):
+
+    def test_parse_sentence(self):
+        sentence = pynmea.nmea.MQH()
+        with self.assertRaises(NotImplementedError) as cm:
+            sentence.construct()
+        self.assertEqual(NotImplementedError,type(cm.exception))
+
+    def test_construct(self):
+        sentence = pynmea.nmea.MQH()
+        sentence.construct(**{'operation': 'autopilot_mode', 'autopilot_mode': '0'})
+        self.assertEqual('$PTMQH,\x01\x01\x00\x00*7C', sentence.nmea_sentence)
+
 def load_tests(*args):
 
     # Process the test for parses_map, for all following sentences

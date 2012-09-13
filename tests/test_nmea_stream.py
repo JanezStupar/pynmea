@@ -13,48 +13,14 @@ class TestTMQStream(TestCase):
     What is important to know is that TMQ parsing rules are completely different
     than those of NMEAStream class objects.
     """
-
-    def test_splits_data_1(self):
-        test_data = '$foo,bar,baz*77\n$Meep,wibble,123,321\n'
-        streamer = TMQStream()
-        result = streamer._split(test_data)
-        self.assertEqual(result, ['$foo,bar,baz*77\n$Meep,wibble,123,321\n'])
-        #NMEAStream expected result
-        self.assertNotEqual(result, ['foo,bar,baz*77', 'Meep,wibble,123,321'])
-
-    def test_splits_data_2(self):
-        test_data = '$foo,bar,baz*77\r$Meep,wibble,123,321\r'
-        streamer = TMQStream()
-        result = streamer._split(test_data)
-        self.assertEqual(result, ['$foo,bar,baz*77\r$Meep,wibble,123,321\r'])
-        #NMEAStream expected result
-        self.assertNotEqual(result, ['foo,bar,baz*77', 'Meep,wibble,123,321'])
-
-    def test_splits_data_3(self):
-        test_data = '$foo,bar,baz*77\r\n$Meep,wibble,123,321'
-        streamer = TMQStream()
-        result = streamer._split(test_data)
-        self.assertEqual(result, ['$foo,bar,baz*77'])
-        #NMEAStream expected result
-        self.assertNotEqual(result, ['foo,bar,baz*77', 'Meep,wibble,123,321'])
-
-    def test_splits_data_4(self):
-        test_data = '$foo,bar,baz*77NOTHING$Meep,wibble,123,321NOTHING'
-        streamer = TMQStream()
-        result = streamer._split(test_data, separator='NOTHING')
-        self.assertEqual(result, ['$foo,bar,baz*77NOTHING$Meep,wibble,123,321NOTHING'])
-        #NMEAStream expected result
-        self.assertNotEqual(result, ['foo,bar,baz*77', 'Meep,wibble,123,321'])
-
     def test__read(self):
         # WARNING!: If data is supplied through file like object, the data MUST be in binary format
         # for TMQ style streamer to work correctly
         test_file = os.path.join(os.path.dirname(__file__), 'test_data',
             'test_data_small.tmq')
         expected_result = [
-        '$GPRMC,184332.07,A,1929.459,S,02410.381,E,74.00,16.78,210410,0.0,E*46\n',
-        'PTMQA,\x01\x02$M\x08\x05\x91\x02$M\x00*E8',
-        'PTMQA,\x01\x02*M\x08\x05\\\x02*M\x00*76',
+        '$PTMQA,\x01\x02$M\x08\x05\x91\x02$M\x00*E8',
+        '$PTMQA,\x01\x02*M\x08\x05\\\x02*M\x00*76',
         ]
         with open(test_file, 'r') as test_file_fd:
             streamer = TMQStream(stream_obj=test_file_fd)
@@ -69,9 +35,8 @@ class TestTMQStream(TestCase):
 
     def test__read_data(self):
         expected_result = [
-            '$GPRMC,184332.07,A,1929.459,S,02410.381,E,74.00,16.78,210410,0.0,E*46\n',
-            'PTMQA,\x01\x02$M\x08\x05\x91\x02$M\x00*E8',
-            'PTMQA,\x01\x02*M\x08\x05\\\x02*M\x00*76',
+            '$PTMQA,\x01\x02$M\x08\x05\x91\x02$M\x00*E8',
+            '$PTMQA,\x01\x02*M\x08\x05\\\x02*M\x00*76',
             ]
 
         # WARNING!: For TMQStreamer the data MUST be in binary format for streamer to work correctly
@@ -88,15 +53,13 @@ $GPVTG,16.78,T,,M,74.00,N,137.05,K,A*36"""
 
         streamer = TMQStream()
         data = streamer._read(data=input_data)
-        data += streamer._read(data='')
 
         self.assertEqual(data, expected_result)
 
     def test__get_type(self):
         streamer = TMQStream()
         sentence = '$GPRMC,184332.07,A,1929.459,S,02410.381,E,74.00,16.78,210410,0.0,E*46'
-        sen_type = streamer._get_type(sentence)
-        self.assertTrue(isinstance(sen_type(), RMC))
+        self.assertRaises( TypeError, streamer._get_type, sentence)
 
         sentence = '$PTMQA,\x01\x02$M\x08\x05\x91\x02$M\x00*E8\r\n'
         sen_type = streamer._get_type(sentence)
@@ -112,13 +75,11 @@ $GPVTG,16.78,T,,M,74.00,N,137.05,K,A*36"""
             nmea_objects = []
             while next_data:
                 nmea_objects += next_data
-                next_data = streamer.get_objects()
 
-        expected_object_types = ['RMC', 'MQA', 'MQA']
+        expected_object_types = ['MQA', 'MQA']
 
         self.assertEqual(expected_object_types[0], nmea_objects[0].sen_type)
         self.assertEqual(expected_object_types[1], nmea_objects[1].sen_type)
-        self.assertEqual(expected_object_types[2], nmea_objects[2].sen_type)
 
     def test_read_data_obj_raw(self):
         data = """$GPRMC,184332.07,A,1929.459,S,02410.381,E,74.00,16.78,210410,0.0,E*46
@@ -134,13 +95,11 @@ $GPVTG,16.78,T,,M,74.00,N,137.05,K,A*36"""
 
         streamer = TMQStream()
         nmea_objects = streamer.get_objects(data=data)
-        nmea_objects += streamer.get_objects(data='')
 
-        expected_object_types = ['RMC', 'MQA', 'MQA']
+        expected_object_types = ['MQA', 'MQA']
 
         self.assertEqual(expected_object_types[0], nmea_objects[0].sen_type)
         self.assertEqual(expected_object_types[1], nmea_objects[1].sen_type)
-        self.assertEqual(expected_object_types[2], nmea_objects[2].sen_type)
 
     def test_read_data_str_raw(self):
         data = """$GPRMC,184332.07,A,1929.459,S,02410.381,E,74.00,16.78,210410,0.0,E*46
@@ -156,12 +115,10 @@ $GPVTG,16.78,T,,M,74.00,N,137.05,K,A*36"""
 
         streamer = TMQStream()
         nmea_objects = streamer.get_strings(data=data)
-        nmea_objects += streamer.get_strings(data='')
 
         expected_result = [
-            '$GPRMC,184332.07,A,1929.459,S,02410.381,E,74.00,16.78,210410,0.0,E*46\n',
-            'PTMQA,\x01\x02$M\x08\x05\x91\x02$M\x00*E8',
-            'PTMQA,\x01\x02*M\x08\x05\\\x02*M\x00*76',
+            '$PTMQA,\x01\x02$M\x08\x05\x91\x02$M\x00*E8',
+            '$PTMQA,\x01\x02*M\x08\x05\\\x02*M\x00*76',
             ]
 
         self.assertEqual(expected_result, nmea_objects)
