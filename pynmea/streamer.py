@@ -36,7 +36,7 @@ class NMEAStream(object):
             try:
                 nmea_ob.parse(nmea_str)
                 nmea_objects.append(nmea_ob)
-            except ChecksumException:
+            except Exception:
                 #NMEA object was invalid, do not add it to the object list
                 pass
 
