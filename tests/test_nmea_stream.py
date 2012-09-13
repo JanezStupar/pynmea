@@ -71,10 +71,7 @@ $GPVTG,16.78,T,,M,74.00,N,137.05,K,A*36"""
 
         with open(test_file, 'r') as test_file_fd:
             streamer = TMQStream(stream_obj=test_file_fd)
-            next_data = streamer.get_objects()
-            nmea_objects = []
-            while next_data:
-                nmea_objects += next_data
+            nmea_objects = streamer.get_objects()
 
         expected_object_types = ['MQA', 'MQA']
 
