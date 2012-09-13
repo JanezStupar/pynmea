@@ -155,8 +155,24 @@ class TMQStream(NMEAStream):
         2. Treat statements as fixed length strings.
         3. Assume that TMQ statements always provide \r\n at the end of statement
     """
-#    def _get_type(self, sentence):
-#        pass
+    def _get_type(self, sentence):
+        """ Get the NMEA type and return the appropriate object. Returns
+            None if no such object was found.
+
+            TODO: raise error instead of None. Failing silently is a Bad Thing.
+            We can always catch the error later if the user wishes to supress
+            errors.
+        """
+
+        #modified tu support Gadgetpool.de SEATALK/NMEA Usb bridge
+        sentence = sentence.split(',')
+        sen_type = sentence[0].lstrip('$')
+        if not sen_type[:-1] == 'PTMQ':
+            raise TypeError('Not a TMQ sentence')
+        sen_type = sen_type[-3:]
+        sen_mod = __import__('pynmea.nmea', fromlist=[sen_type])
+        sen_obj = getattr(sen_mod, sen_type, None)
+        return sen_obj
 
     def _split(self, data, separator=None):
         """
