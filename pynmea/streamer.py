@@ -184,37 +184,45 @@ class TMQStream(NMEAStream):
 
         Separator parameter is ignored.
         """
-#        sentences = data.split('$PTMQ')
-        sentences = re.split('\$(?=PTMQ)', data)
-        clean_sentences = []
-        for item in sentences:
-            # 'clean' the item. Contrast this with NMEAStream's _split method. We cannot use rstrip, because
-            # in TMQ format newline (\n) may be a part of valid data, which we don't want to remove.
-            # Thus we might pass some technically incorrect data through (e.g. an ordinary NMEA statement),
-            # because we have no way of discerning a partial TMQ statement from a valid NMEA statement
-            # e.g.: "$GPHDT,100.2,T\n" cannot be differentiated from a part of TMQ statement that would contain
-            # something like "$\x01\n" -> consider a hipothetical statement "$PTMQD,\x01$\x02\n\x04*7D"
-            parts = item.split('\r\n')
-            cleaned_item = parts[0]
-            # Check for checksum, but just if item ends with \r\n and there is a * character as
-            # [-3] of the cleaned item.
-            # This is necessary since this library needs to support streaming operation and with TMQ
-            # it is quite possible to have a partial statement with a * character as data point somewhere
-            # where a checksum could be expected in a standards compiant NMEA statement.
-            if len(parts) == 2 and  '*' == cleaned_item[-3]:
-                # There must be a checksum. Remove any trailing fluff:
-                try:
-                    first = cleaned_item[:-3]
-                    checksum = cleaned_item[-2:]
-                except ValueError:
-                    # Some GPS data recorders have been shown to output
-                    # run-together sentences (no leading $).
-                    # In this case, ignore error and continue, discarding the
-                    # erroneous data.
-                    continue
-                cleaned_item = '*'.join([first, checksum[:2]])
-            if cleaned_item:
-                clean_sentences.append(cleaned_item)
 
-        return clean_sentences
+        sentences = re.split('\$(?=PTMQ)', data)
+        cleaned_sentences = []
+        for item in sentences:
+            if item:
+                tag = item.split(',')[0][-1]
+                if tag == 'A' and len(item) >= 22:
+                    cleaned_item = item[:22].rstrip()
+                elif tag == 'H' and len(item) >= 15:
+                    cleaned_item = item[:15].rstrip()
+                else:
+                    continue
+                cleaned_item = '$'+cleaned_item
+                cleaned_sentences.append(cleaned_item)
+        return cleaned_sentences
+
+    def _read(self, data=None, size=1024):
+        """ read size bytes of data. always strip off the last record and
+            append to the start of the data stream on the next call.
+            this ensures that only full sentences are returned.
+        """
+        if not data and not self.stream and not self.head:
+            # If there's no data and no stream, raise an error
+            raise NoDataGivenError('No data was provided')
+
+        if not data and self.stream:
+            read_data = self.stream.read(size)
+        else:
+            read_data = data
+
+        data = self.head + read_data
+        raw_sentences = self._split(data)
+
+        if not read_data:
+            self.head = ''
+            return raw_sentences
+        elif not raw_sentences:
+            self.head = data
+            return raw_sentences
+        else:
+            return raw_sentences
 
