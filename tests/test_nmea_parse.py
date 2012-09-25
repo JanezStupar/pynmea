@@ -1467,23 +1467,166 @@ class TestS86(NmeaTest):
         self.assertEqual(NotImplementedError,type(cm.exception))
 
 class TestMQA(unittest.TestCase):
+    testcases = [
+        (
+            '$PTMQA,\x01\x02$M\x08\x05\x91\x02$M\x00*E8',
+            {
+                'alarm': 0,
+                'autopilot_mode': '0',
+                'checksum': 'E8',
+                'course': decimal.Decimal('137'),
+                'heading': decimal.Decimal('137'),
+                'rudder': decimal.Decimal('6'),
+                'rudder_sensitivity': 5,
+                'rudder_tolerance': 8,
+                'sen_type': 'MQA',
+                'talker_id': 'PT'
+            },
+        ),
+        (
+            '$PTMQA,\x01\x03$M\x08\x05\xae\x03$M\x00*D7',
+            {
+                'alarm': 0,
+                'autopilot_mode': '0',
+                'checksum': 'D7',
+                'course': decimal.Decimal('201'),
+                'heading': decimal.Decimal('201'),
+                'rudder': decimal.Decimal('16.199999999999999289457264239899814128875732421875'),
+                'rudder_sensitivity': 5,
+                'rudder_tolerance': 8,
+                'sen_type': 'MQA',
+                'talker_id': 'PT'
+            },
+        ),
+        (
+            '$PTMQA,\x01\x02(M\x08\x05\x80\x02(M\x00*F9',
+            {
+                'alarm': 0,
+                'autopilot_mode': '0',
+                'checksum': 'F9',
+                'course': decimal.Decimal('138'),
+                'heading': decimal.Decimal('138'),
+                'rudder': decimal.Decimal('0'),
+                'rudder_sensitivity': 5,
+                'rudder_tolerance': 8,
+                'sen_type': 'MQA',
+                'talker_id': 'PT'
+            },
+        ),
+        (
+            '$PTMQA,\x01\x01$M\x08\x05=\x01$M\x00*44',
+            {
+                'alarm': 0,
+                'autopilot_mode': '0',
+                'checksum': '44',
+                'course': decimal.Decimal('73'),
+                'heading': decimal.Decimal('73'),
+                'rudder': decimal.Decimal('-23.60000000000000142108547152020037174224853515625'),
+                'rudder_sensitivity': 5,
+                'rudder_tolerance': 8,
+                'sen_type': 'MQA',
+                'talker_id': 'PT'
+            }
+        ),
+        (
+            '$PTMQA,\x01\x01*M\x08\x05\x86\x01*M\x00*FF',
+            {
+                'alarm': 0,
+                'autopilot_mode': '0',
+                'checksum': 'FF',
+                'course': decimal.Decimal('74'),
+                'heading': decimal.Decimal('74'),
+                'rudder': decimal.Decimal('2.100000000000000088817841970012523233890533447265625'),
+                'rudder_sensitivity': 5,
+                'rudder_tolerance': 8,
+                'sen_type': 'MQA',
+                'talker_id': 'PT'
+            },
+        ),
+        (
+            '$PTMQA,\x01\x02*M\x08\x057\x02*M\x00*4E',
+            {
+                'alarm': 0,
+                'autopilot_mode': '0',
+                'checksum': '4E',
+                'course': decimal.Decimal('138'),
+                'heading': decimal.Decimal('138'),
+                'rudder': decimal.Decimal('-25.699999999999999289457264239899814128875732421875'),
+                'rudder_sensitivity': 5,
+                'rudder_tolerance': 8,
+                'sen_type': 'MQA',
+                'talker_id': 'PT'
+            },
+        ),
+        (
+            '$PTMQA,\x01\x02,M\x08\x057\x02,M\x00*4E',
+            {
+                'alarm': 0,
+                'autopilot_mode': '0',
+                'checksum': '4E',
+                'course': decimal.Decimal('139'),
+                'heading': decimal.Decimal('139'),
+                'rudder': decimal.Decimal('-25.699999999999999289457264239899814128875732421875'),
+                'rudder_sensitivity': 5,
+                'rudder_tolerance': 8,
+                'sen_type': 'MQA',
+                'talker_id': 'PT'
+            },
+        ),
+        (
+            '$PTMQA,\x01\x02$M\x08\x057\x02$M\x00*4E',
+            {
+                'alarm': 0,
+                'autopilot_mode': '0',
+                'checksum': '4E',
+                'course': decimal.Decimal('137'),
+                'heading': decimal.Decimal('137'),
+                'rudder': decimal.Decimal('-25.699999999999999289457264239899814128875732421875'),
+                'rudder_sensitivity': 5,
+                'rudder_tolerance': 8,
+                'sen_type': 'MQA',
+                'talker_id': 'PT'
+            }
+        ),
+        (
+            '$PTMQA,\x01\x02,M\x08\x057\x02,M\x00*4E',
+            {
+                'alarm': 0,
+                'autopilot_mode': '0',
+                'checksum': '4E',
+                'course': decimal.Decimal('139'),
+                'heading': decimal.Decimal('139'),
+                'rudder': decimal.Decimal('-25.699999999999999289457264239899814128875732421875'),
+                'rudder_sensitivity': 5,
+                'rudder_tolerance': 8,
+                'sen_type': 'MQA',
+                'talker_id': 'PT'
+            }
+        ),
+        (
+            '$PTMQA,\x01\x02\nM\x08\x05\x81\x02\nM\x00*F8',
+            {
+                'alarm': 0,
+                'autopilot_mode': '0',
+                'checksum': 'F8',
+                'course': decimal.Decimal('130'),
+                'heading': decimal.Decimal('130'),
+                'rudder': decimal.Decimal('0.40000000000000002220446049250313080847263336181640625'),
+                'rudder_sensitivity': 5,
+                'rudder_tolerance': 8,
+                'sen_type': 'MQA',
+                'talker_id': 'PT'
+            },
+        ),
+    ]
 
-    def test_parse_sentence(self):
-        sentence = '$PTMQA,\x01\x02$M\x08\x05\x91\x02$M\x00*E8'
-        instance = pynmea.nmea.MQA()
-        instance.parse(sentence)
-        self.assertEqual('PT', instance.talker_id)
-        self.assertEqual('MQA', instance.sen_type)
-        self.assertEqual(0, instance.alarm)
-        self.assertEqual('E8', instance.checksum)
-        self.assertEqual('0', instance.autopilot_mode)
-        self.assertEqual(decimal.Decimal(137), instance.course)
-        self.assertEqual('M', instance.course_type)
-        self.assertEqual(decimal.Decimal(137), instance.heading)
-        self.assertEqual('M', instance.heading_type)
-        self.assertEqual(decimal.Decimal(6.0), instance.rudder)
-        self.assertEqual(5, instance.rudder_sensitivity)
-        self.assertEqual(8, instance.rudder_tolerance)
+    def test_parse_sentences(self):
+        keys = ['talker_id', 'sen_type', 'alarm', 'checksum', 'autopilot_mode', 'course', 'heading', 'rudder', 'rudder_sensitivity', 'rudder_tolerance']
+        for sentence, expected in self.testcases:
+            instance = pynmea.nmea.MQA()
+            instance.parse(sentence)
+            result = dict([(k, getattr(instance, k)) for k in keys])
+            self.assertEqual(result, expected)
 
     def test_construct(self):
         sentence = pynmea.nmea.MQA()

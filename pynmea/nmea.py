@@ -4,6 +4,7 @@ import re
 from pynmea.utils import checksum_calc, NMEADeserializer
 from pynmea import exceptions
 
+
 class NMEASentence(object):
     """ Base sentence class. This is used to pull apart a sentence.
         It will not have any real reference to what things mean. Things that
@@ -24,14 +25,7 @@ class NMEASentence(object):
         """
         self.parts = nmea_str.split(',')
 
-        chksum_regex = re.compile(r".+((\*{1})(?i)(?P<chksum>[0-9a-f]{2}))$")
-        m = chksum_regex.search(nmea_str)
-
-        if m:
-            self.checksum = m.groupdict()['chksum']
-            d, par, ck = self.parts.pop().rpartition('*')
-            self.parts.extend([d])
-
+        self._parse_checksum(nmea_str)
         #if '*' in self.parts[-1]:
             #d, par, ck = self.parts.pop().rpartition('*')
             #self.parts.extend([d])
@@ -40,6 +34,17 @@ class NMEASentence(object):
             self.parts[0] = self.parts[0][1:]
         self.sen_type = self.parts[0][-3:]
         self.talker_id = self.parts[0][:2]
+
+    def _parse_checksum(self, nmea_str):
+        chksum_regex = re.compile(r".+((\*{1})(?i)(?P<chksum>[0-9a-f]{2}))$")
+        
+        m = chksum_regex.search(nmea_str)
+
+        if m:
+            self.checksum = m.groupdict()['chksum']
+            d, par, ck = self.parts.pop().rpartition('*')
+            self.parts.extend([d])
+        
 
     def construct(self,**kwargs):
         """
@@ -146,7 +151,9 @@ class TMQSentence(NMEASentence):
         self.talker_id = 'PT'
 
     def parse(self, tmq_str, ignore_err=False):
-        self._parse(tmq_str)
+        self.talker_id = self.parts[0][:2]
+
+        self._parse_checksum(tmq_str)
 
         #Check the checksum
         if hasattr(self,'checksum') and not self.check_chksum():
@@ -448,6 +455,7 @@ class MQA(TMQSentence):
 
     Autopilot MCU (Master Control Unit) to head
     """
+    mqa_re = re.compile('^\$(..MQA),(.{11}\*[0-9a-fA-F]{2})$', re.DOTALL)
 
     def parse(self, tmq_str, ignore_err=False):
         """
@@ -468,6 +476,9 @@ class MQA(TMQSentence):
 
         An example of raw sentence: "$PTMQA,\x01\x02$M\x08\x05\x91\x02$M\x00*E8\r\n"
         """
+        m = self.mqa_re.match(tmq_str)
+        
+        self.parts = list(m.groups())
         super(MQA,self).parse(tmq_str)
 
         self.sen_type = 'MQA'

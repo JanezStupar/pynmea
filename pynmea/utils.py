@@ -9,7 +9,7 @@ def checksum_calc(nmea_str):
     """
     chksum_val = 0
     nmea_str = nmea_str.replace('$', '')
-    nmea_str = nmea_str.split('*')[0]
+    nmea_str = nmea_str.rsplit('*', 1)[0]
     for next_char in nmea_str:
         chksum_val ^= ord(next_char)
 
