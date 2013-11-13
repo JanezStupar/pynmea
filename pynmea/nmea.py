@@ -66,7 +66,7 @@ class NMEASentence(object):
 
             #get value from the kwargs according to the parse_map key
             value = kwargs.get(item[1],None)
-            if not value:
+            if value is None:
                 setattr(self,item[1],'')
                 self.parts.insert(index,'')
             #use correct type
@@ -1546,3 +1546,25 @@ class RMZ(NMEASentence):
                       "pos_fix_dim"))
 
         super(RMZ, self).__init__(parse_map,**kwargs)
+
+class EMR(NMEASentence):
+    """ WEMAR anchorpilot
+    """
+
+    def __init__(self,**kwargs):
+        parse_map = (
+            ("Sentence type", "sentence_type"),
+            ("Instruction type", "instruction_type"),
+            ("Chain counter units", "chain_counter_units"),
+            ("Chain counter", "chain_counter",'decimal'),
+            ("Battery voltage", "battery_voltage",'decimal'),
+            ("Tandem diff", "tandem_diff"),
+            ("Light status", "light_status"),
+            ("Water status", "water_status"),
+            ("EEPROM status", "eeprom_status"),
+            ("Base status", "base_status"),
+            ("Limit flag", "limit_flag"),
+            ("Base version", "base_version"),
+            ("RSSI", "RSSI"))
+
+        super(EMR, self).__init__(parse_map,**kwargs)
